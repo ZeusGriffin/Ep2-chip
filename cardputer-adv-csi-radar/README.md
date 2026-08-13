@@ -248,3 +248,111 @@ The listing must explicitly say:
 - Module dimensions that fit the enclosure.
 
 Avoid listings that say only **Arduino UNO shield**, **8-bit parallel**, **16-bit parallel**, or **MCU interface** without confirming SPI. Product titles are sometimes inconsistent, so verify the pin labels in the product photos before purchasing.
+
+
+## Gaming build from Short HPsiM36x3RA
+
+Source: [Why You SHOULDN'T Use a Cardputer for Gaming](https://www.youtube.com/shorts/HPsiM36x3RA)
+
+This Short tests the same Cardputer ADV dual-screen cyberdeck as a portable gaming device. It does **not** introduce a second top-screen design or require a new processor. The practical project addition is a removable gaming firmware setup for Doom and retro-console emulation.
+
+### Honest capability summary
+
+- Doom, NES, Game Boy/Color, Master System, Game Gear, and several other older systems can run on the Cardputer ADV.
+- The Cardputer keyboard is usable, but it is not as comfortable as a real directional pad for long sessions.
+- The selected 2.8-inch ILI9341 top screen will not automatically work with existing gaming firmware. Most released emulators draw to the built-in ST7789 display and require source changes to target the external TFT.
+- SNES and Mega Drive support varies by title and may have slowdown, sound issues, tearing, or control limitations.
+- Do not buy a different Cardputer or screen solely for this Short; use the ADV and 2.8-inch ILI9341 already selected.
+
+### Gaming parts to buy
+
+| Qty | Item | Requirement | Expected price |
+|---:|---|---|---:|
+| 1 | microSD card | 16–32 GB, name-brand, FAT32; 32 GB preferred | $7–$12 |
+| 1 | USB-C data cable | Data-capable, not charge-only | $6–$12 |
+| 1 | Optional M5Stack Joystick | Unit Joystick v1.1 (U024-C) or Joystick2 (U024-V2); verify connector/firmware support | $10–$18 |
+| 1 | Optional printed D-pad cap | Cardputer key overlay; use a community model and verify ADV fit | $2–$8 printed |
+| — | Legally obtained ROMs/WAD | Dumped from games you own or freely licensed homebrew | $0 project allowance |
+
+The microSD card is the only new part normally required if the Cardputer ADV and cable are already owned.
+
+### Correct gaming downloads
+
+1. **M5Launcher** — install from the official project/release channel and use it to switch compatible firmware without repeatedly using a computer.
+2. **Cardputer Game Station** — https://github.com/geo-tp/Cardputer-Game-Station-Emulators
+3. **Cardputer Game Station releases** — https://github.com/geo-tp/Cardputer-Game-Station-Emulators/releases
+4. **Cardputer ADV Doom keyboard-fixed port** — https://github.com/MAXXTANG/CardPuterAdvancedDoom
+5. **Game Boy Enhanced firmware with Cardputer ADV support** — https://github.com/Mr-PauI/Gameboy-Enhanced-Firmware-m5stack-cardputer-
+6. **M5Burner** — https://docs.m5stack.com/en/download
+
+Do not use an older original-Cardputer Doom binary on the ADV just because it displays correctly. The original Cardputer keyboard uses different hardware; incompatible builds can show the demo while ignoring every key. Use the ADV-specific keyboard-fixed port.
+
+### Gaming setup sequence
+
+1. Back up anything important from the Cardputer and SD card.
+2. Format a 16–32 GB microSD card as FAT32.
+3. Install M5Launcher or use the exact flashing procedure documented by the selected firmware release.
+4. First test Cardputer Game Station on the built-in screen.
+5. Put only legally obtained, uncompressed ROM files on the SD card. Keep fewer than 512 files in one folder.
+6. Test keyboard controls, sound, save/load, exit, and battery behavior before installing the clamshell.
+7. For Doom, use the Cardputer ADV-specific build and its documented partition/flashing procedure. Do not assume every Doom image is M5Launcher-compatible.
+8. Add the optional D-pad cap or joystick only after confirming the chosen firmware supports it.
+9. Treat external-screen gaming as a later source-code port. Do not permanently wire or cut the display PCB expecting released emulators to use it automatically.
+
+### Fabrication and electronics tools
+
+#### Required or strongly recommended
+
+| Tool | Why it is needed | Typical budget |
+|---|---|---:|
+| Fine-tip temperature-controlled soldering iron | Harness and connector work | $25–$45 |
+| Electronics solder and flux | Reliable low-temperature joints | $8–$15 |
+| Digital multimeter | Continuity, ground, and 3.3 V verification | $15–$25 |
+| Dupont/JST-style crimp tool | Detachable seven-wire display harness | $18–$30 |
+| Wire stripper/cutter for 28 AWG | Clean small-wire preparation | $8–$15 |
+| Precision screwdriver set | Cardputer and enclosure disassembly | $10–$18 |
+| Rotary tool with cutoff/sanding bits | Trim only excess display PCB fiberglass if the exact case requires it | $30–$60 |
+| Eye protection and dust mask/respirator | Required when cutting fiberglass PCB | $10–$20 |
+| Small files and 400–800 grit sandpaper | Final enclosure/PCB edge fitting | $6–$12 |
+| Cyanoacrylate glue plus activator | Tidy harness and non-structural fixture work | $10–$16 |
+| Heat source for heat-shrink | Small heat gun preferred | $15–$25 |
+| Digital caliper | Verify display board, bezel, screw, and hinge dimensions | $12–$25 |
+
+#### Optional if ordering a finished print
+
+- FDM 3D printer, PLA+/PETG filament, nozzle tools, and heat-set-insert tip.
+- Bench power supply for current-limit testing.
+- Helping hands/PCB holder and solder fume extractor.
+- Flush cutters, tweezers, spudger, and kapton tape.
+
+Do not cut the display PCB unless the product photos and continuity inspection show that the area contains no traces, components, antenna, or ground plane needed by the module. Fiberglass dust is hazardous; work outdoors or with proper extraction and PPE.
+
+### Complete physical-build consumables
+
+| Item | Typical budget |
+|---|---:|
+| 2.8-inch ILI9341 SPI display | $10–$18 |
+| 2.54 mm connector/crimp assortment | $8–$15 |
+| 28 AWG multicolor stranded wire | $8–$14 |
+| Heat-shrink assortment | $6–$10 |
+| M2/M2.5 screws and heat-set inserts | $7–$14 |
+| Small hinges/hinge hardware and lid stop | $6–$15 |
+| Foam mounting tape and strain relief | $5–$10 |
+| Printed enclosure if outsourced | $15–$40 |
+| 32 GB microSD card | $7–$12 |
+
+Prices are planning ranges, not checkout quotes. Shipping and sales tax are not included.
+
+## Price budget
+
+| Scenario | What it assumes | Estimated subtotal |
+|---|---|---:|
+| Gaming only | Cardputer ADV already owned; add microSD and reuse cable | **$7–$24** |
+| Dual-screen parts only | Cardputer and tools already owned; screen, harness, hardware, print, microSD | **$72–$148** |
+| Full build with new Cardputer | Add official Cardputer ADV at $29.90 before shipping/tax | **$102–$178** |
+| Starter tool kit | Buy the listed essential fabrication/electronics tools | **$152–$286** |
+| Complete first-time build | New Cardputer, dual-screen parts, gaming storage, and starter tools | **$254–$464** |
+
+### Recommended spending target
+
+Budget **about $150 before tax/shipping** if you already own the Cardputer ADV but need the dual-screen parts plus a few basic tools. Budget **about $325 before tax/shipping** for a comfortable first-time build starting with no tools. Buy the screen, microSD, connector parts, and enclosure hardware first; do not buy the optional joystick, 3.5-inch display, or external backlight supply until the basic ADV gaming firmware and 2.8-inch display tests pass.
