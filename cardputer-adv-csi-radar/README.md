@@ -197,3 +197,54 @@ Because the previous display build was flipped/reversed, do not permanently moun
 ## Status of the second Short
 
 The URL is preserved above as a project reference. Its public metadata was not reliably retrievable during this update, so no unverified hardware or wiring claims from that Short have been added. Before buying a unique part shown only in that Short, capture its title/description or a clear screenshot and verify its model number.
+
+
+## Top-screen shortlist: selected screen plus four alternatives
+
+The top screen should use a true **SPI breakout module**, not an Arduino UNO-style parallel shield. A non-touch module is preferred because the Cardputer keyboard already supplies input and omitting touch saves pins, wiring, thickness, and power.
+
+| Version | Screen | Resolution / bus | Best use | Software change | Physical tradeoff | Buy |
+|---:|---|---|---|---|---|---|
+| 1 — Selected | **2.8-inch ILI9341 TFT** | 320×240 SPI | Best overall clamshell balance | Lowest; matches the archived driver and wiring plan | Medium lid; common boards are about 50×86 mm | [Amazon non-touch](https://www.amazon.com/2-8-inch-SPI-module-ILI9341/dp/B0C7L1SY7V) · [Amazon alternatives](https://www.amazon.com/s?k=2.8%22+ILI9341+SPI+non+touch) · [AliExpress](https://www.aliexpress.com/wholesale?SearchText=2.8+inch+ILI9341+SPI+320x240+non+touch) |
+| 2 — Compact | **2.4-inch ILI9341 TFT** | 320×240 SPI | Smallest/lightest top lid while keeping the same resolution | Very low; same ILI9341 driver, but verify offsets/rotation | Easier hinge and lower power; smaller text | [Amazon HiLetgo](https://www.amazon.com/HiLetgo-Display-ILI9341-Touch-240x320/dp/B07WNLNRDN) · [AliExpress](https://www.aliexpress.com/wholesale?SearchText=2.4+inch+ILI9341+SPI+240x320+non+touch) |
+| 3 — Larger, same driver | **3.2-inch ILI9341 TFT** | 320×240 SPI | Bigger readable radar without changing controller family | Low; same driver, but case and rotation must be retested | Wider/heavier lid; same pixel count as 2.8-inch, so not sharper | [Amazon DIANN](https://www.amazon.com/DIANN-ILI9341-Display-320x240-Screen/dp/B0BNQD38T2) · [AliExpress](https://www.aliexpress.com/wholesale?SearchText=3.2+inch+ILI9341+SPI+240x320) |
+| 4 — IPS upgrade | **2.0-inch ST7789V IPS** | 320×240 SPI | Best viewing angles, crisp compact status screen | Moderate; change driver/setup from ILI9341 to ST7789 and verify color order/offset | Smaller than selected screen; visually better from angled lid positions | [Amazon ST7789V](https://www.amazon.com/WatangTech-LCD-Display-Resolution-Controller/dp/B0FBKYFQ4Q) · [AliExpress](https://www.aliexpress.com/wholesale?SearchText=2.0+inch+ST7789+IPS+320x240+SPI) |
+| 5 — Maximum size | **3.5-inch ILI9488 IPS/TFT** | 480×320 SPI | Largest radar/map view | High; different driver, larger framebuffer and slower full-screen SPI updates | Heaviest lid and highest power; needs stronger hinge and careful backlight power | [Amazon Hosyond](https://www.amazon.com/Hosyond-Display-Compatible-Mega2560-Development/dp/B0BWJHK4M6) · [Amazon IPS alternative](https://www.amazon.com/480x320-Display-Module-ILI9488-Driver/dp/B09318RGTV) · [AliExpress](https://www.aliexpress.com/wholesale?SearchText=3.5+inch+ILI9488+SPI+480x320+IPS) |
+
+### Recommendation order
+
+1. **Buy the 2.8-inch ILI9341 non-touch SPI module** for the planned build.
+2. Choose the 2.4-inch ILI9341 only if pocket size and hinge weight matter more than visibility.
+3. Choose the 3.2-inch ILI9341 if you want a visibly larger screen with the least software disruption.
+4. Choose the 2.0-inch ST7789 IPS if viewing angle and image quality matter more than size.
+5. Choose the 3.5-inch ILI9488 only for a desk-oriented cyberdeck; it is the least pocketable and requires the most firmware and enclosure work.
+
+### Complete top-screen purchase list
+
+- [ ] One selected SPI display module; **2.8-inch ILI9341 non-touch recommended**.
+- [ ] One 8-position 2.54 mm female connector housing/header or equivalent detachable locking connector.
+- [ ] Crimp contacts and a matching crimping tool, or pre-crimped female leads.
+- [ ] Seven colors of flexible 28 AWG stranded wire.
+- [ ] Heat-shrink tubing in small sizes.
+- [ ] Fine-tip soldering iron, electronics solder, and flux.
+- [ ] Digital multimeter for continuity and 3.3 V checks.
+- [ ] M2 or M2.5 screws and heat-set brass inserts sized for the final enclosure.
+- [ ] Two small hinges or one printed living/pin hinge rated for the screen weight.
+- [ ] Lid stop, friction hinge, or kickstand so the display cable is not the angle stop.
+- [ ] Thin foam tape or printed bezel supports; do not press directly on the LCD glass.
+- [ ] Small strain-relief clamp where the seven-wire harness crosses the hinge.
+- [ ] Optional right-angle USB-C data cable/adapter for flashing after assembly.
+- [ ] Optional external 5 V backlight supply or switched backlight circuit for the 3.5-inch screen; do not assume the Cardputer 3.3 V rail can safely supply every large module.
+
+### Listing checks before ordering
+
+The listing must explicitly say:
+
+- SPI serial interface.
+- Correct controller: ILI9341, ST7789V, or ILI9488 as listed above.
+- Correct resolution.
+- Logic compatible with 3.3 V.
+- A breakout PCB with accessible VCC, GND, SCK/CLK, MOSI/SDI, CS, DC/RS, and RST pins.
+- Module dimensions that fit the enclosure.
+
+Avoid listings that say only **Arduino UNO shield**, **8-bit parallel**, **16-bit parallel**, or **MCU interface** without confirming SPI. Product titles are sometimes inconsistent, so verify the pin labels in the product photos before purchasing.
