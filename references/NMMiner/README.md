@@ -1,0 +1,1199 @@
+> [!NOTE]
+> Archived from [NMminer1024/NMMiner](https://github.com/NMminer1024/NMMiner/blob/main/README.md) on 2026-08-16.
+> Copyright remains with the original authors. This reference does not imply that every listed firmware image is compatible with the Cardputer ADV or other Ep2-chip hardware.
+
+<div align="center">
+
+# NMMiner
+### *Make it better*
+
+[![GitHub Downloads](https://img.shields.io/github/downloads/NMminer1024/NMMiner/total)](https://github.com/NMminer1024/NMMiner)
+[![GitHub commit activity](https://img.shields.io/github/commit-activity/t/NMminer1024/NMMiner)](https://github.com/NMminer1024/NMMiner)
+[![Wiki](https://img.shields.io/badge/Wiki-nmminer.com-4CAF50)](https://wiki.nmminer.com/)
+
+</div>
+
+## Overview
+
+NMMiner is an optimized BTC mining firmware designed for ESP32-based development boards. With one-click deployment through the [NMMiner Flash Tool](https://flash.nmminer.com/), it provides an accessible entry point into cryptocurrency mining.
+
+## Requirements
+
+- ESP32 development boards with the following chips:
+  - ESP32-S3
+  - ESP32-D0
+  - ESP32-C3
+  - ESP32-C5
+## Key Features
+
+- **Optimized Performance**
+  - ESP32-D0: Up to 1,035 KH/s
+  - ESP32-S3: Up to 398 KH/s
+  - ESP32-C3: Up to 402 KH/s
+  - ESP32-C5: Up to 150 KH/s
+
+- **Management Tools**
+  - **NMController Client**: Windows desktop application ([source code](https://github.com/NMminer1024/NMController_client))
+    - Pre-compiled installers (x64 and x86) available in the `tool` folder
+  - **NMController Web**: Cross-platform Python implementation ([source code](https://github.com/NMminer1024/NMController_web))
+    - Compatible with Windows and macOS
+
+---
+
+## Supported Hardware
+
+The following table shows the supported development boards and their performance metrics:
+
+| Board                                                                                   | Performance       | Chip         |
+| :------------------------------------------------------------------------------------- | :---------------: | :----------: |
+| [NM-TV-154](https://www.nmminer.com/product/nm-tv-154/)                               | **1035.9 KH/s**  | ESP32-D0     |
+| ESP32 DEVKitC 32                                                                      | **1035.9 KH/s**  | ESP32-D0     |
+| [Heltec WiFi LoRa32 v2](https://heltec.org/project/wifi-lora-32v2/)                  | **1035.5 KH/s**  | ESP32-D0     |
+| [ESP32 2432S028R](https://www.aliexpress.com/item/1005008484663300.html)             | **1025.3 KH/s**  | ESP32-D0     |
+| ESP32 2432s024                                                                        | **1025.1 KH/s**  | ESP32-D0     |
+| TTGO T-Display                                                                        | **1025.2 KH/s**  | ESP32-D0     |
+| ESP32 3248s035                                                                        | **1025.1 KH/s**  | ESP32-D0     |
+| ESP32 CAM                                                                             | **1025.1 KH/s**  | ESP32-D0     |
+| ELECROW esp32 display 2.4inch                                                         | **1025.1 KH/s**  | ESP32-D0     |
+| ELECROW esp32 display 2.8inch                                                         | **1025.1 KH/s**  | ESP32-D0     |
+| ESP32 32E LCD Display 3.2inch                                                         | **1025.1 KH/s**  | ESP32-D0     |
+| ESP32 32E LCD Display 4.0inch                                                         | **1025.1 KH/s**  | ESP32-D0     |
+| WT32-SC01                                                                             | **930.1 KH/s**   | ESP32-D0     |
+| Seeed XIAO ESP32-C3                                                                   | **396.9 KH/s**   | ESP32-C3     |
+| [Heltec WiFi Kit32 v3](https://heltec.org/project/wifi-kit32-v3/)                    | **400.9 KH/s**   | ESP32-S3FN8  |
+| [Heltec WiFi LoRa32 v3](https://www.aliexpress.com/item/1005005443005152.html)       | **400.7 KH/s**   | ESP32-S3FN8  |
+| [Heltec Wireless Stick Lite v3](https://heltec.org/project/wireless-stick-lite-v2/)  | **399.3 KH/s**   | ESP32-S3FN8  |
+| [Heltec Wireless Stick v3](https://heltec.org/project/wireless-stick-v3/)            | **398.2 KH/s**   | ESP32-S3FN8  |
+| [NM Bot Chain v1](https://www.aliexpress.com/item/1005008096252566.html)             | **393.8 KH/s**   | ESP32-S3FN8  |
+| Seeed XIAO ESP32-S3                                                                   | **393.7 KH/s**   | ESP32-S3FN8  |
+| ESP32-S3 0.42" OLED                                                                   | **392.1 KH/s**   | ESP32-S3     |
+| LilyGO T-Display S3 AMOLED                                                            | **390.1 KH/s**   | ESP32-S3R8   |
+| [Heltec Vision Master T190](https://www.aliexpress.us/item/1005007449552504.html)    | **388.4 KH/s**   | ESP32-S3R8   |
+| [NM USB Chain v1](https://www.aliexpress.com/item/1005008089478881.html)             | **387.5 KH/s**   | ESP32-S3FN8  |
+| LilyGO T-Dongle S3                                                                    | **385.3 KH/s**   | ESP32-S3R8   |
+| LilyGO T-Display S3                                                                   | **384.5 KH/s**   | ESP32-S3R8   |
+| Waveshare ESP32 S3 LCD 1.47                                                           | **384.5 KH/s**   | ESP32-S3R8   |
+| Waveshare ESP32 S3 LCD 1.47B                                                          | **383.5 KH/s**   | ESP32-S3R8   |
+| Waveshare ESP32 S3 Touch LCD 35                                                       | **380.3 KH/s**   | ESP32-S3R8   |
+| ESP32-S3 Geek                                                                         | **378.1 KH/s**   | ESP32-S3     |
+| LilyGO T-QT                                                                           | **361.1 KH/s**   | ESP32-S3FN8  |
+| ESP32-C3 0.42" OLED                                                                   | **315.1 KH/s**   | ESP32-C3     |
+| ESP32-C5 devkitc 1                                                                    | **150.2 KH/s**   | ESP32-C5     |
+| NM-CYD-C5                                                                             | **150.2 KH/s**   | ESP32-C5     |
+
+---
+
+## Hardware Showcase
+
+<div align="center">
+  <table width="100%">
+    <tr>
+      <td width="50%" align="center"><img src="fig/cyd-kline.jpg" alt="CYD Board"></td>
+      <td width="50%" align="center"><img src="fig/cyd-weather.jpg" alt="cyd-price"></td>
+    </tr>
+  </table>
+</div>
+
+<div align="center">
+  <table width="100%">
+    <tr>
+      <td width="50%" align="center"><img src="fig/lilygo-weather.jpg" alt="LilyGO T-Display S3"></td>
+      <td width="50%" align="center"><img src="fig/lilygo-kline.jpg" alt="LilyGO T-Display S3 Clock"></td>
+    </tr>
+  </table>
+</div>
+
+<div align="center">
+  <table width="100%">
+    <tr>
+      <td width="50%" align="center"><img src="fig/heltec_t190.jpg" alt="Heltec T190"></td>
+      <td width="50%" align="center"><img src="fig/lora32_v2.jpg" alt="LoRa32 v2"></td>
+    </tr>
+  </table>
+</div>
+
+<div align="center">
+  <table width="100%">
+    <tr>
+      <td width="50%" align="center"><img src="fig/usb_chain.jpg" alt="USB Chain"></td>
+      <td width="50%" align="center"><img src="fig/s3geek.jpg" alt="S3 Geek"></td>
+    </tr>
+  </table>
+</div>
+
+<div align="center">
+  <table width="100%">
+    <tr>
+      <td width="50%" align="center"><img src="fig/lilygo-t-display-s3-amoled.jpg" alt="LilyGO T-Display S3 AMOLED"></td>
+      <td width="50%" align="center"><img src="fig/ttgo_display.jpg" alt="TTGO Display"></td>
+    </tr>
+  </table>
+</div>
+
+<div align="center">
+  <table width="100%">
+    <tr>
+      <td width="50%" align="center"><img src="fig/c3-042-oled.jpg" alt="C3 0.42 OLED"></td>
+      <td width="50%" align="center"><img src="fig/s3-042-oled.jpg" alt="S3 0.42 OLED"></td>
+    </tr>
+  </table>
+</div>
+
+<div align="center">
+  <table width="100%">
+    <tr>
+      <td width="50%" align="center"><img src="fig/t-qt.jpg" alt="T-QT Board"></td>
+      <td width="50%" align="center"><img src="fig/lilygo-t-dongle-s3.jpg" alt="LilyGO T-Dongle S3"></td>
+    </tr>
+  </table>
+</div>
+
+<div align="center">
+  <table width="100%">
+    <tr>
+      <td width="50%" align="center"><img src="fig/esp32_dev_kitc_32.jpg" alt="ESP32 DevKitC 32"></td>
+      <td width="50%" align="center"><img src="fig/xiao_c3.jpg" alt="XIAO C3"></td>
+    </tr>
+  </table>
+</div>
+
+<div align="center">
+  <table width="100%">
+    <tr>
+      <td width="50%" align="center"><img src="fig/nm-tv-154.jpg" alt="NM-TV-154"></td>
+      <td width="50%" align="center"><img src="fig/wt32-sc01.jpg" alt="WT32-SC01"></td>
+    </tr>
+  </table>
+</div>
+
+<div align="center">
+  <table width="100%">
+    <tr>
+      <td width="50%" align="center"><img src="fig/esp32s3147-miner.jpg" alt="ESP32 S3 1.47 Miner"></td>
+      <td width="50%" align="center"><img src="fig/esp32s3147-clock.jpg" alt="ESP32 S3 1.47 Clock"></td>
+    </tr>
+  </table>
+</div>
+
+<div align="center">
+  <img src="fig/pool.png" alt="Pool Interface">
+</div>
+
+---
+
+### Button Controls
+
+#### Single Button Boards
+Boards equipped with only a boot button:
+
+| Button | Action        | Function                                           |
+| :----- | :------------ | :------------------------------------------------- |
+| Boot   | Long press    | Enter miner configuration mode                     |
+| Boot   | Double click  | Switch to next screen page (if display available) |
+| Boot   | Single click  | Wake up screen (if display available)             |
+
+#### Dual Button Boards
+Boards with both boot and user buttons:
+
+| Button | Action        | Function                                           |
+| :----- | :------------ | :------------------------------------------------- |
+| Boot   | Long press    | Clear all status from NVS (if feature enabled)    |
+| Boot   | Single click  | Wake up screen (if display available)             |
+| Boot   | Double click  | Wake up screen (if display available)             |
+| User   | Single click  | Wake up screen (if display available)             |
+| User   | Double click  | Switch to next screen (if display available)      |
+| User   | Long press    | Enter miner configuration mode                     |
+
+### Display Information
+
+<div align="center">
+  <img src="fig/description-cyd.jpg" alt="Display Description">
+</div>
+
+---
+
+## Initial Setup
+
+### First-Time Configuration
+
+1. **Automatic WiFi Connection**: Upon power-on, the device attempts to connect to the previously configured WiFi network. If connection fails after 15 seconds, it automatically enters configuration mode.
+
+2. **Access Point Setup**: Search for the free access point named `nmap-2.4g` (no password required).
+
+3. **Configuration Interface**: 
+   - **Mobile devices**: You will be automatically redirected to the configuration page
+   - **PC/Desktop**: Navigate to `192.168.4.1` in your web browser
+
+<div align="center">
+  <img src="fig/config-1.png" alt="Configuration Step 1">
+</div>
+
+4. **Parameter Configuration**: Configure your mining parameters following the on-screen instructions. Note that higher UI refresh values result in increased hash rates, and hash rates also improve when the display is turned off.
+
+<div align="center">
+  <img src="fig/config-2.png" alt="Configuration Step 2">
+</div>
+
+5. **Accessing Configuration**: You can return to the configuration page at any time using the [button controls](#button-controls).
+
+6. **Saving Settings**: After clicking **Save**, allow 10-15 seconds for the process to complete. Do not manually reset the device; it will restart automatically.
+
+### Manual Configuration Mode
+
+For single button boards:
+1. Long press the **boot** button
+
+For dual button boards:
+1. Long press the **user** button
+
+2. Follow the [First-Time Configuration](#first-time-configuration) steps.
+
+<div align="center">
+  <img src="fig/nmap.png" alt="AP Configuration">
+</div>
+
+---
+
+## Firmware Installation & Updates
+
+### Using NMMiner Flash Tool
+
+**Step 1**: Open the [NMMiner Flash Tool](https://flash.nmminer.com/) in Chrome or Edge browser.
+
+**Step 2**: Select your board model and initiate the firmware update. The tool will automatically:
+- Download the latest firmware version from GitHub
+- Configure flash parameters for your specific board
+
+<div align="center">
+  <img src="fig/NMMiner flash tool.jpg" alt="NMMiner Flash Tool Interface">
+</div>
+
+> **Note 1**: If you're simply updating existing firmware, the above steps are sufficient. For first-time installations, [firmware activation](#firmware-activation) is required.
+
+> **Note 2**: If you lose your license, re-flash your device using the [NMMiner Flash Tool](https://flash.nmminer.com/) to receive a new license automatically.
+
+### Firmware Activation
+
+**Step 1**: After flashing the firmware, obtain your license following the on-screen instructions.
+
+<div align="center">
+  <img src="fig/Licence.jpg" alt="License Generation">
+</div>
+
+**Step 2**: Copy the license string into the license code field and click the activation button. Successful activation will display a confirmation message.
+
+<div align="center">
+  <img src="fig/active.jpg" alt="Activation Success">
+</div>
+
+**Step 3**: For first-time installations, configure basic settings as shown below. Alternatively, you can configure these settings later using the [button controls](#button-controls).
+
+<div align="center">
+  <img src="fig/web_cfg.jpg" alt="Web Configuration">
+</div>
+
+**Step 4**: Your miner is now ready to use!
+
+### Mining Pool Configuration
+
+Due to limited on-chip resources, some high-difficulty mining pools may reject connections from ESP32-based miners. The following pools support low-difficulty stratum connections suitable for this hardware:
+
+#### Bitcoin (BTC)
+- `stratum+tcp://solobtc.nmminer.com:3333` - [Home page](https://solobtc.nmminer.com/#/)
+- `stratum+tcp://au.solobtc.nmminer.com:3333` - [Home page](https://au.solobtc.nmminer.com/#/)
+
+#### DigiByte (DGB)
+- `stratum+tcp://dgb-stratum.solominer.net:3333` - [Home page](https://digibyte.solominer.net/#/)
+
+---
+
+## Monitoring & Management
+
+#### Web-Based Monitoring
+
+Access the web monitoring interface by navigating to your miner's IP address in a web browser.:
+
+<div align="center">
+  <img src="fig/new-web.png" alt="Web Monitor Setting page">
+</div>
+
+<div align="center">
+  <img src="fig/web-dashboard.png" alt="Web Monitor Dashboard">
+</div>
+
+
+## HTTP API
+
+NMMiner firmware exposes a REST API on **port 80** that can be used to query device status, read and update settings, and control the device programmatically — no authentication required.
+
+| Category | Endpoints |
+| :------- | :-------- |
+| Discovery & Status | `GET /probe` · `GET /alive` · `GET /api/system/info` |
+| Settings | `G/P /api/setting/network` · `mining` · `time` · `preference` · `market` · `weather` |
+| Market Data | `GET /api/market/pairs` |
+| Weather | `POST /api/weather/refresh` |
+| System Control | `POST /api/swarm/find` · `POST /api/system/restart` |
+| Screensaver | `GET /api/update/screensaver/preflight` · `POST /api/update/screensaver` |
+
+Each device also serves an **interactive API documentation page** at `http://<device-ip>/api-doc` — accessible directly from any browser on the same network.
+
+**→ [Full API Reference](docs/api-reference.md)**
+
+---
+
+## Support & Contact
+
+We are committed to expanding support for additional Arduino development board models. If you encounter any issues or have suggestions for improvement, please reach out to us.
+
+| Contact Method | Details                                                    |
+| :------------: | :--------------------------------------------------------- |
+| **Email**      | nmminer1024@gmail.com                                      |
+| **Telegram**   | [https://t.me/NMMiner](https://t.me/NMMiner)               |
+| **Website**    | [NMTech Official Site](https://www.nmminer.com/)          |
+
+---
+
+## Release Log
+
+### (2026.07.24) - v2.0.04
+- `board support`:
+  - `elecrow-esp32-display-24inch` (ESP32-D0, 2.4" TFT)
+  - `elecrow-esp32-display-28inch` (ESP32-D0, 2.8" TFT)
+  - `esp32-c3-042-oled` / `esp32-c3-042-oled-newscreen` (ESP32-C3, 0.42" 128×64 OLED)
+  - `esp32-s3-042-oled` (ESP32-S3, 0.42" 128×64 OLED)
+  - `heltec-wifi-kit32-v3` (ESP32-S3)
+  - `heltec-wifi-lora32-v2` (ESP32-D0)
+  - `heltec-wifi-lora32-v3` (ESP32-S3)
+  - `heltec-wireless-stick-v3` / `heltec-wireless-stick-lite-v3` (ESP32-S3)
+  - `lilygo-t-qt` (ESP32-S3, 128×128 TFT)
+  - `nmtech-display-28` (ESP32-S3, 2.8" TFT)
+  - `waveshare-esp32-s3-touch-lcd-35` (ESP32-S3, 3.5" 480×320, capacitive touch)
+- `feature`:
+  - Web frontend: "Clear BH" button to reset block hit counter with one click.
+  - API: `POST /api/system/clear-block-hit` endpoint added; interactive API doc updated.
+  - 0.42" OLED (128×64) UI overhaul: weather page, price K-line chart, and clock page added.
+  - Block hit display auto-switches to larger font for 2-digit counts across all 7 TFT layouts.
+  - Price K-line chart: axis label toggle switch added.
+  - Price page: coin-switch header and label layout refined.
+- `fix`:
+  - ESP32-S3 0.42" OLED I2C init instability (added pin fallback with read-based probe).
+  - NMTech 2.8" display panel inversion corrected.
+  - Waveshare 3.5" touch driver and LittleFS mount failure.
+  - Capacitive touch rotation handling.
+  - Seeed XIAO ESP32-C3 linker error.
+  - ESP32 32E LCD 4.0" touch Y-axis mirror mapping.
+- `optimize`:
+  - LVGL buffer allocation now uses runtime PSRAM detection for smarter sizing.
+  - Waveshare 3.5" screen page transitions smoother.
+  - TFT/LVGL builds no longer compile unused U8g2 libraries and fonts, reducing firmware size.
+  - Wireless Stick Lite: debug logs output on long-press in headless mode.
+  - LittleFS mount now tries multiple partition labels (www / spiffs) with fallback.
+
+### (2026.06.08) - v2.0.03
+- `board support`:
+  - `lilygo-t-display-s3-amoled` (ESP32-S3R8, 1.91" 536×240 AMOLED, ~389KH/s)
+- `feature`:
+  - Ladder page: global top-10 mining difficulty leaderboard, privacy-first wallet display (first4…last4).
+  - Swarm scan progress bar shown in web frontend.
+- `fix`:
+  - AMOLED boot black screen and random crash on startup.
+  - Ladder page navigation loop bug when dismissing consent overlay.
+  - T190 external power enable issue.
+  - Web server crash caused by frequent page refreshes.
+- `optimize`:
+  - Swarm traffic and memory usage significantly reduced.
+  - Swarm gossip uses zero-heap streaming parser; supports up to 255 devices.
+
+### (2026.05.08) - v2.0.02
+- `board support`:
+  - `heltec-vision-master-t190` (ESP32-S3, 1.9" 320×170)
+  - `ttgo-t-display` (ESP32-D0, 1.14" 240×135)
+  - `lilygo-t-dongle-s3` (ESP32-S3, 0.96" 160×80)
+  - `waveshare-esp32-s3-lcd-147` (ESP32-S3, 1.47" 172×320, USB-A)
+  - `waveshare-esp32-s3-lcd-147b` (ESP32-S3, 1.47" 172×320, USB-C)
+  - `esp32-s3-geek` (ESP32-S3)
+  - `seeed-xiao-esp32-s3` (ESP32-S3)
+  - `seeed-xiao-esp32-c3` (ESP32-C3)
+  - `esp32-dev-kitc-32` (ESP32-D0)
+  - `esp32cam` (ESP32-D0)
+  - `nm-bot-chain-v1` (ESP32-S3)
+  - `esp32-32e-lcd-display-32inch` (ESP32-D0)
+  - `esp32-32e-lcd-display-40inch` (ESP32-D0)
+  - `wt32-sc01` (ESP32-D0, 3.5" 480×320, capacitive touch)
+- `feature`:
+  - K-line (candlestick chart) granularity user-configurable.
+  - Screen saver: black screen mode added.
+  - Weather page: temperature unit selectable (°C / °F).
+  - Web frontend dynamically loads display-related settings based on board capability.
+  - Browser cache strategy added to reduce web server crash under frequent access.
+- `fix`:
+  - Swarm device list not shown in web monitor.
+  - K-line carousel playback bug.
+  - Price wall coin price parsing bug; improved display for unusually long price values.
+  - CYD 3.5" config page element misalignment.
+  - WiFi reconnect logic issue.
+  - UI page base class / resolution-derived class hierarchy conflict.
+  - NM-TV-154 touch coordinate mapping.
+  - ST7789 screen stays black on boot due to wrong SPI mode (MODE0 → MODE3).
+- `optimize`:
+  - Price wall UI and web monitor market card redesigned.
+  - RAM usage reduced; device runs more stably under load.
+  - LVGL memory configuration tuned.
+  - CYD 2.8" weather page layout improved.
+  - ESP32-S3 Geek and TTGO T-Display weather page optimized.
+  - NM-Bot-Chain button interaction logic and LED default state improved.
+
+### (2026.04.17) - v2.0.01
+- `board support`:
+  - `esp32-2432s024` (CYD 2.4 inch)
+  - `esp32-2432s028r` (CYD 2.8 inch)
+  - `esp32-3248s035` (CYD 3.5 inch)
+  - `nm-tv-154` (1.54 inch) 
+- `feature`:
+  - Screen saver with custom image upload and carousel playback.
+  - Weather page: current conditions, AQI, 3-day forecast, sunrise/sunset.
+  - Bitcoin price wall mode and candlestick (K-line) chart.
+  - Swarm: LAN device discovery and aggregated hashrate display.
+  - Tap screen to switch page; long-press 10s to enter config mode.
+  - Screen rotation, timezone, brightness apply immediately without reboot.
+  - Extended timezone range: -13.5 ~ +13.5.
+- `fix`:
+  - Screen not lighting up when brightness set to minimum on boot.
+  - Various web frontend display issues.
+- `optimize`:
+  - Significantly reduced free heap usage — device runs more stably under load.
+  - Web monitor UI redesigned and improved.
+  - NVS write frequency reduced to lower flash wear.
+
+### (2026.03.23) - v1.8.29
+- `board support`:
+  - `esp32-c5-devkitc-1` and `nm-cyd-c5` hashrate 150kH/s.
+- `feature`:
+  - Hostname defined by users.
+- `fix`:
+  - Primary pool check interval random range from 1 to 30 minutes.
+  - Multiple ntp server trying when previous fails. 
+- `remove`:
+  - None.
+- `optimize`:
+  - Network relate optimism.
+  - Optimize the mining pool connection logic to minimize the risk of causing a concurrency disaster for the mining pool.
+
+### (2026.02.02) - v1.8.28
+- `board support`:
+  - None.
+- `feature`:
+  - None.
+- `fix`:
+  - Touch driver of CYD.
+  - UI issue of lilygo t-qt.
+- `remove`:
+  - None.
+- `optimize`:
+  - Primary and fallback pool change to 'solobtc.nmminer.com' and 'au.solobtc.nmminer.com' which forked from public pool.
+
+### (2026.01.04) - v1.8.27
+- `board support`:
+  - None.
+- `feature`:
+  - None.
+- `fix`:
+  - Touch driver for elecrow 2.4 and 2.8 inch board.
+- `remove`:
+  - None.
+- `optimize`:
+  - Primary and Fallback pool changed.
+
+### (2025.12.21) - v1.8.26
+- `board support`:
+  - None.
+- `feature`:
+  - None.
+- `fix`:
+  - Web monitor last seen issue.
+  - Uart config mode issue on chip esp32s3.  
+- `remove`:
+  - None.
+- `optimize`:
+  - None.
+
+### (2025.12.17) - v1.8.25
+- `board support`:
+  - None.
+- `feature`:
+  - None.
+- `fix`:
+  - Fallback pool switch logic.
+  - Miner stuck at 80%.
+- `remove`:
+  - None.
+- `optimize`:
+  - Miner will exit uart config mode when the first share submit. 
+
+### (2025.12.13) - v1.8.24
+- `board support`:
+  - `esp32-32e-lcd-display-3.2inch` and `esp32-32e-lcd-display-4.0inch`.
+- `feature`:
+  - None.
+- `fix`:
+  - Stuck at 80% when miner bootup.
+- `remove`:
+  - None.
+- `optimize`:
+  - ESP32D0 upto 1035kH/s.
+
+### (2025.11.25) - v1.8.23
+- `board support`:
+  - `elecrow_esp32_display_24inch` and `elecrow_esp32_display_28inch`.
+- `feature`:
+  - New clock style(remove second)
+  - Merry Christmas surprise(Trigger on Christmas Day, exit via any screen touch), board support NMTV-154, CYD2.4 , CYD2.8 ,CYD3.5
+- `fix`:
+  - Block hit counter issue.
+- `remove`:
+  - None.
+- `optimize`:
+  - Stability Optimization.
+
+### (2025.11.04) - v1.8.22
+- `board support`:
+  - None.
+- `feature`:
+  - Date format adjustable by users in clock page.
+  - 24h and 12h time format adjustableby users in clock page.
+- `fix`:
+  - Some potential restart risks.
+  - Screen dead pixels on the loading page of miner.
+- `remove`:
+  - None.
+- `optimize`:
+  - Stability Optimization.
+  - Some known issues.
+
+### (2025.10.06) - v1.8.20
+- `board support`:
+  - `waveshare-esp32-s3-touch-lcd-35`
+- `feature`:
+  - Resumes on the last page after a shutdown or crash.
+- `fix`:
+  - Some potential restart risks.
+- `remove`:
+  - None.
+- `optimize`:
+  - Coin price page alignment optimization.
+  - Screen lights up gradually when you turn on the miner to avoid screen distortion.
+
+### (2025.08.14) - v1.8.10
+- `board support`:
+  - A new screen driver for `esp32-c3-042-oled`
+- `feature`:
+  - Multi-currency price page on miner screen.
+- `fix`:
+  - Oled device display.
+  - License lost issue on `waveshare-esp32-s3-lcd-147` and `waveshare-esp32-s3-lcd-147b` board.
+- `remove`:
+  - Market price enable option on config page.
+- `optimize`:
+  - Memory usage.
+
+### (2025.07.29) - v1.7.06
+- `board support`:
+  - None.
+- `feature`:
+  - A totally new web monitor page for each miner(monitor and config all other miners on this kind of page).
+- `fix`:
+  - Primary pool lost and recover logic.
+- `remove`:
+  - None.
+- `optimize`:
+  - Memory usage.
+  - ssl connection.
+  - Price color on clock page, green for raise and red for drop. 
+
+### (2025.07.18) - v1.7.05
+- `board support`:
+  - `Waveshare-esp32-s3-lcd-147(USB-A)` and `Waveshare-esp32-s3-lcd-147b(USB-C)`.
+- `feature`:
+  - When the primary mining pool active again, miner will switch back to the primary pool within 10s.
+- `fix`:
+  - Hit value issue on NM-TV clock page.
+  - Screen can not wakeup in sleep mode on NM-TV .
+- `remove`:
+  - None.
+- `optimize`:
+  - Miner page UI for share : `session best/all time best` when enable "save status" option.
+  - Miner page UI for share : `session last/session best`  when disable "save status" option.
+   
+### (2025.07.11) - v1.7.04
+- `feature`:
+  - None.
+- `fix`:
+  - Loading page stuck issue.
+- `remove`:
+  - None.
+- `optimize`:
+  - Clock page.
+  - Memory usage.
+
+### (2025.06.16) - v1.7.03
+- `feature`:
+  - None.
+- `fix`:
+  - Wifi connection issues.
+  - Market Price freeze issues.
+- `remove`:
+  - Last diff in miner page.
+- `optimize`:
+  - UI of clock page on T-display s3 dongle.
+
+### (2025.05.28) - v1.7.02
+- `feature`:
+  - Add NM-TV-154 board support, upto 1010kH/s.
+  - Auto timezone.
+  - Dark style of clock page.
+- `fix`:
+  - Some wifi connection issues.
+  - Price display overflow issue.
+- `remove`:
+  - Share status save in nvs(only save best diff and block hit conuter).
+  - Timezone in configuration page.
+- `optimize`:
+  - ESP32-D0WDQ6-V3 reversion 3 upto 1010kH/s.
+  - ESP32-D0WDQ6 reversion 1 upto 857kH/s.
+  - ESP32-S3 upto 390kH/s.
+  - ESP32-C3 upto 396kH/s.
+  - Random delay when connecting to Wi-Fi to avoid being denied access by the router.
+
+### (2025.04.23) - v1.7.01
+- `feature`:
+  - None.
+- `fix`:
+  - WPA group key exchange cause wifi disconnect issue.(This kind of issue is more common on `MikroTik` and `Fritz!box`.)
+- `remove`:
+  - None.
+- `optimize`:
+  - ESP32-D0WDQ6-V3 reversion 3 upto 993kH/s.
+  - ESP32-D0WDQ6 reversion 1 upto 873kH/s.
+  - The initial share difficulty starts from 0.0005
+
+### (2025.04.12) - v1.6.03
+- `feature`:
+  - New firmware release reminder on miner loading page and miner main page.
+  - Pool url field on web monitor page.
+  - Pool url display on miner clock page.
+- `fix`:
+  - When the screen is asleep, tapping the screen will wake it up(for CYD 2.4, 2.8, 3.5).
+  - Log issue for pool switch.
+- `remove`:
+  - Temperature of CYD on web monitor page. 
+- `optimize`:
+  - ESP32D0 upto 483kH/s.
+  - Clock display to 12-hour format.
+  - Memory usage.
+
+### (2025.03.30) - v1.6.02
+- Add:
+  - Screen touch driver to CYD 2.4, 2.8, 3.5 inch board.
+- Fixed:
+  - CYD ili9341 ui issue.
+  - NTP and swarm issue.
+- Improved:
+  - None.
+- Modify:
+  - Clock page style.
+  - Time zone allow float value input.
+  - CYD has no temperature sensor, display real time instead.
+  - NTP calibration interval 6h.
+
+### (2025.03.18) - v1.6.01
+- Add:
+  - board 'esp32 2432s024' support.
+  - board 'esp32 3248s035' support.
+  - board 'esp32 c3 0.42 oled' support.
+  - board 'esp32 s3 0.42 oled' support.
+  - board 'esp32 cam' support.
+  - board 'wt32 sc01' support.
+  - board 'lilygo t qt' support.
+- Fixed:
+  - Hashrate issues.
+- Improved:
+  - ESP32 d0 hashrate upto 470kH/s.
+  - NMController client update to v0.4.1, *.ini file support.
+  - NM-USB-Chain default page to meter page.
+  - Add price to clock page.
+- Modify:
+  - Clock page time rolling to static.
+
+### (2025.03.06) - v1.5.01
+- Add:
+  - Configure NMMiner via the NMController client to make your life easier.
+- Fixed:
+  - Restart issue.
+- Improved:
+  - NMController client update to v0.4.
+- Modify:
+  - None.
+
+### (2025.03.03) - v1.4.02
+- Add:
+  - esp32-s3-geek support, upto 308kH/s.
+- Fixed:
+  - Local diff infinite issues.
+- Improved:
+  - NMController client update to v0.3.
+- Modify:
+  - None.
+
+### (2025.02.27) - v1.4.01
+- Add:
+  - None.
+- Fixed:
+  - Freezing issues.
+- Improved:
+  - NMController web server.
+- Modify:
+  - None.
+
+### (2025.02.26) - v1.3.01
+- Add:
+  - Led enable/disable option.
+- Fixed:
+  - Fallback wallet address save failed issue.
+- Improved:
+  - ESP32d0 upto 412kH/s
+- Modify:
+  - Get DNS from router.
+- Known:
+  - Freezing in some wifi environment.
+
+### (2025.02.21) - v1.2.01
+- Add:
+  - None.
+- Fixed:
+  - Reboot issue.
+  - Freezing issue.
+- Improved:
+  - ESP32d0 upto 375kH/s
+  - ESP32s3 upto 318kH/s
+  - ESP32c3 upto 308kH/s.
+- Modify:
+  - UDP boardcast from 2s to 5s.
+  - DNS fixed to 8.8.8.8 and 8.8.4.4
+
+### (2025.02.17) - v1.1.03
+- Add:
+  - esp32 dev kitc 32 ,upto 340kH/s.
+- Fixed:
+  - Reboot issue.
+  - Freezing issue.
+- Improved:
+  - ESP32d0 upto 340kH/s, ESP32s3 upto 291kH/s, ESP32c3 upto 284kH/s.
+- Modify:
+  - None.
+
+### (2025.02.11) - v1.1.02
+- Add:
+  - None.
+- Fixed:
+  - Reboot issue.
+  - Freezing issue.
+- Improved:
+  - ESP32 d0 upto 224kH/s.
+- Modify:
+  - Remove ssl connection.
+
+### (2025.02.08) - v1.1.01
+- Add:
+  - Fallback pool option.
+- Fixed:
+  - seeed xiao esp32 c3 configuration mode issue.
+- Improved:
+  - ESP32 s3 upto 255KH/s,ESP32 c3 upto 240KH/s.
+- Modify:
+  - SSL option, enable ssl connection in pool URL as "stratum+ssl://example-pool.com:12345"
+
+### (2025.01.31) - v0.6.02
+- Add:
+  - None.
+- Fixed:
+  - seeed xiao esp32 c3 configuration mode issue.
+- Improved:
+  - None.
+- Modify:
+  - None.
+
+### (2025.01.30) - v0.6.01
+- Add:
+  - support: seeed xiao esp32 c3 ,seeed xiao esp32 s3
+- Fixed:
+  - Pool connection time out.
+  - Block counter issue.
+- Improved:
+  - None.
+- Modify:
+  - None.
+
+### (2025.01.12) - v0.5.03
+- Add:
+  - support: lilygo-t-display-s3 amoled
+- Fixed:
+  - None.
+- Improved:
+  - UDP broadcast protocol format.
+- Modify:
+  - Configuration mode time out logic.
+
+### (2024.12.19) - v0.5.02
+- Add:
+  - support: holo-cubic-25mm, upto 117kH/s.
+- Fixed:
+  - UTC issues.
+  - Block counter flase count.
+  - QR code issue.
+  - Restart constantly.
+- Improved:
+  - Sahre accept rate.
+- Modify:
+  - Default Wifi change to 'NMMtech-2.4G'.
+  - Default DNS get from LAN.
+
+### (2024.11.22) - v0.5.01
+- Add:
+  - support: TTGO T display, upto 90~92kH/s.
+  - Feature: Led indicator for nm-bot-chain.
+  - Feature: Screen brightness adjustment from config page.
+- Fixed:
+  - UTC issues.
+  - Lilygo T Display s3 and TTGO T Display power supply issues.
+  - Chip ESP32-D0WDQ6-v1 crashed issues, firmware compatible with ESP32-D0WDQ6-v3.
+- Improved:
+  - None.
+- Modify:
+  - User button long pressed to enter miner configuration for 2 buttons boards.
+  - Logo 'lottery' to 'miner'.
+  - Uptime 999 days maximum.
+
+### (2024.11.14) - v0.4.04
+- Add:
+  - Board support heltec-wifi-lora32-v2, upto 92kH/s.
+- Fixed:
+  - Nm-usb-chain gauge calibration.
+  - Remove tempurature from CYD board, No tempurature sensor.
+- Improved:
+  - Breath led on Lilygo T dongle s3.
+- Modify:
+  - None.
+- Baord support
+  - [Heltec Vision Master T190](https://www.aliexpress.us/item/1005007449552504.html)
+  - [Heltec WiFi Lora32 v2](https://heltec.org/project/wifi-lora-32v2/)
+  - [Heltec WiFi Lora32 v3](https://www.aliexpress.com/item/1005005443005152.html)
+  - [Heltec Wireless Stick v3](https://heltec.org/project/wireless-stick-v3/)
+  - [Heltec Wireless Stick Lite v3](https://heltec.org/project/wireless-stick-lite-v2/)
+  - [Heltec Wifi Kit32 v3](https://heltec.org/project/wifi-kit32-v3/)
+  - [NM Bot Chain v1](https://www.nmminer.com/product/nm-botchain/)
+  - [NM USB Chain v1](https://www.nmminer.com/product/nm-usb-chian/)
+  - CYD(ESP32-2432S028R) with ILI9341 and ST7789 TFT driver.
+  - Lilygo T Display-s3
+  - Lilygo T Dongle-s3
+
+
+### (2024.11.07) - v0.4.03
+- Add:
+  - Board support CYD(ESP32-2432S028R) with ILI9341 and ST7789 TFT driver, upto 92kH/s.
+- Fixed:
+  - Restart issues.
+  - Shortage of lvgl heap.
+- Improved:
+  - None.
+- Modify:
+  - Remove firmware version in stratum protocol.
+  - Update NMControler, Added column sorting.
+- Baord support
+  - [Heltec Vision Master T190](https://www.aliexpress.us/item/1005007449552504.html)
+  - [Heltec WiFi lora 32 v2](https://heltec.org/project/wifi-lora-32v2/)
+  - [Heltec WiFi lora 32 v3](https://www.aliexpress.com/item/1005005443005152.html)
+  - [Heltec wireless stick v3](https://heltec.org/project/wireless-stick-v3/)
+  - [Heltec wireless stick lite v3](https://heltec.org/project/wireless-stick-lite-v2/)
+  - [Heltec Wifi kit 32 v3](https://heltec.org/project/wifi-kit32-v3/)
+  - [NM-Bot-Chain-V1](https://www.nmminer.com/product/nm-botchain/)
+  - NM-USB-Chain-V1(Coming soon to sale)
+  - CYD(ESP32-2432S028R) with ILI9341 and ST7789 TFT driver.
+  - Lilygo-T-Display-s3
+  - Lilygo-T-Dongle-s3
+
+### (2024.10.29) - v0.4.02
+- Add:
+  - Board support Lilygo T Dongle s3
+  - BTC market price(Disable default, enable this feature on config page)
+- Fixed:
+  - Miner reboot constantly.
+- Improved:
+  - UI
+- Baord support
+  - [Heltec Vision Master T190](https://www.aliexpress.us/item/1005007449552504.html)
+  - [Heltec WiFi lora 32 v3](https://www.aliexpress.com/item/1005005443005152.html)
+  - [Heltec wireless stick v3](https://heltec.org/project/wireless-stick-v3/)
+  - [Heltec wireless stick lite v3](https://heltec.org/project/wireless-stick-lite-v2/)
+  - [Heltec Wifi kit 32 v3](https://heltec.org/project/wifi-kit32-v3/)
+  - Lilygo-T-Display-s3
+  - Lilygo-T-Dongle-s3
+  - NM-Bot-Chain-V1(Coming soon to sale)
+  - NM-USB-Chain-V1(Coming soon to sale)
+
+### (2024.10.21) - v0.4.01
+- Add:
+  - Board support NM Bot Chain V1
+  - Board support NM USB Chain V1
+  - Screen orientation option in configuration page.
+- Fixed:
+  - Valid block worng display, hashrate fall in worng state occasionally.
+- Improved:
+  - UI
+- Baord support
+  - [Heltec Vision Master T190](https://www.aliexpress.us/item/1005007449552504.html)
+  - [Heltec WiFi lora 32 v3](https://www.aliexpress.com/item/1005005443005152.html)
+  - [Heltec wireless stick v3](https://heltec.org/project/wireless-stick-v3/)
+  - [Heltec wireless stick lite v3](https://heltec.org/project/wireless-stick-lite-v2/)
+  - [Heltec Wifi kit 32 v3](https://heltec.org/project/wifi-kit32-v3/)
+  - [All_usbcdc_screenless_esp32s3fn8](https://heltec.org/project/wifi-kit32-v3/)
+  - Lilygo-T-Display-s3
+  - NM-Bot-Chain-V1(Coming soon to sale)
+  - NM-USB-Chain-V1(Coming soon to sale)
+
+### (2024.10.08) - v0.3.04
+- Add:
+  - Board support Heltec Wireless Stick V3.
+- Fixed:
+  - None.
+- Improved:
+  - The initiation order.
+- Baord support
+  - [Heltec Vision Master T190](https://www.aliexpress.us/item/1005007449552504.html)
+  - [Heltec WiFi lora 32 v3](https://www.aliexpress.com/item/1005005443005152.html)
+  - [Heltec wireless stick v3](https://heltec.org/project/wireless-stick-v3/)
+  - [Heltec wireless stick lite v3](https://heltec.org/project/wireless-stick-lite-v2/)
+  - [Heltec Wifi kit 32 v3](https://heltec.org/project/wifi-kit32-v3/)
+  - [All_usbcdc_screenless_esp32s3fn8](https://heltec.org/project/wifi-kit32-v3/)
+  - Lilygo-T-Display-s3
+
+### (2024.09.27) - v0.3.03
+- Add:
+  - Board support Lilygo-T-Display s3.
+- Fixed:
+  - Readme and structure of tool folder.
+- Improved:
+  - Loading screen.
+- Baord support
+  - [Heltec Vision Master T190](https://www.aliexpress.us/item/1005007449552504.html)
+  - [Heltec WiFi lora 32 v3](https://www.aliexpress.com/item/1005005443005152.html)
+  - [Heltec wireless stick lite v3](https://heltec.org/project/wireless-stick-lite-v2/)
+  - [Heltec Wifi kit 32 v3](https://heltec.org/project/wifi-kit32-v3/)
+  - [All_usbcdc_screenless_esp32s3fn8](https://heltec.org/project/wifi-kit32-v3/)
+  - Lilygo-T-Display-s3
+
+### (2024.09.23) - v0.3.02
+- Add:
+  - Web ESP-Tool.
+  - Support chip, esp32fn8.
+- Fixed:
+  - None
+- Improved:
+  - None.
+- Baord support
+  - [Heltec Vision Master T190](https://www.aliexpress.us/item/1005007449552504.html)
+  - [Heltec WiFi lora 32 v3](https://www.aliexpress.com/item/1005005443005152.html)
+  - [Heltec wireless stick lite v3](https://heltec.org/project/wireless-stick-lite-v2/)
+  - [Heltec Wifi kit 32 v3](https://heltec.org/project/wifi-kit32-v3/)
+  - [all_usbcdc_screenless_esp32s3fn8](https://heltec.org/project/wifi-kit32-v3/)
+
+### (2024.09.14) - v0.3.02
+- Add:
+  - License.
+- Fixed:
+  - None
+- Improved:
+  - Automatically enter configuration mode.
+- Baord support
+  - [Heltec Vision Master T190](https://www.aliexpress.us/item/1005007449552504.html)
+  - [Heltec WiFi lora 32 v3](https://www.aliexpress.com/item/1005005443005152.html)
+  - [Heltec wireless stick lite v3](https://heltec.org/project/wireless-stick-lite-v2/)
+  - [Heltec Wifi kit 32 v3](https://heltec.org/project/wifi-kit32-v3/)
+
+### (2024.09.08) - v0.3.01
+- Add:
+  - None
+- Fixed:
+  - Readme.md
+- Improved:
+  - None
+- Baord support
+  - [Heltec Vision Master T190](https://www.aliexpress.us/item/1005007449552504.html)
+  - [Heltec WiFi lora 32 v3](https://www.aliexpress.com/item/1005005443005152.html)
+
+### (2024.09.02) - v0.3.01
+- Add:
+  - Tool, [***NMController***](https://github.com/NMminer1024/NMController), Something like a LAN centralized monitoring client, Windows 10 or higher require.
+  - Firmware, mining status broadcast to LAN. 
+- Fixed:
+  - None
+- Improved:
+  - None
+- Baord support
+  - [Heltec Vision Master T190](https://www.aliexpress.us/item/1005007449552504.html)
+  - [Heltec WiFi lora 32 v3](https://www.aliexpress.com/item/1005005443005152.html)
+
+### (2024.09.02) - v0.2.13
+- Add:
+  - None
+- Fixed:
+  - License disappear issue when return to configuration page.
+- Improved:
+  - None
+- Baord support
+  - [Heltec Vision Master T190](https://www.aliexpress.us/item/1005007449552504.html)
+  - [Heltec WiFi lora 32 v3](https://www.aliexpress.com/item/1005005443005152.html)
+
+
+### (2024.08.31) - v0.2.12
+- Add:
+  - None
+- Fixed:
+  - Device would occasionally restart frequently when connecting to WiFi at startup.
+- Improved:
+  - None
+- Baord support
+  - [Heltec Vision Master T190](https://www.aliexpress.us/item/1005007449552504.html)
+  - [Heltec WiFi lora 32 v3](https://www.aliexpress.com/item/1005005443005152.html)
+
+
+### (2024.08.27) - v0.2.11
+- Add:
+  - Web Monitor, makes it easy to monitor your machine without any special client tools. You only need a phone or computer's browser.
+  - Heltec WiFi lora 32 v3 firmware
+- Fixed:
+  - Some issues from WiFi.
+- Improved:
+  - Memory management.
+  - Almost reaching 120KH/s when USB CDC disable.
+- Baord support
+  - [Heltec Vision Master T190](https://www.aliexpress.us/item/1005007449552504.html)
+  - [Heltec WiFi lora 32 v3](https://www.aliexpress.com/item/1005005443005152.html)
+- Next
+  - Some screenless board support.
+
+### (2024.08.15) - v0.2.10
+- Features:
+  - BTC solo miner base on esp32s3 series 
+  - Up to **118kH/s** 
+  - ssl connection support
+  - Screen auto off in 60s
+  - Real time clock
+  - Configuration on websever, it's easy enough to build your first BTC Miner.
+  - WiFi signal strength on screen.
+- Fixed:
+  - Memory leak issues.
+  - Stratum nBits sector parse issues.
+- Modify:
+  - None
+- Baord support
+  - [Heltec Vision Master T190](https://www.aliexpress.us/item/1005007449552504.html)
+
+### (2024.08.13) - v0.2.02
+- Features:
+  - BTC solo miner base on esp32s3 series 
+  - Up to **118kH/s** 
+  - ssl connection support
+  - Screen auto off in 60s
+  - Real time clock
+  - Configuration on websever, it's easy enough to build your first BTC Miner.
+  - WiFi signal strength on screen.
+- Fixed:
+  - Mining status clean issues.
+- Modify:
+  - None
+- Baord support
+  - [Heltec Vision Master T190](https://www.aliexpress.us/item/1005007449552504.html)
+
+
+### (2024.08.10) - v0.2.01
+- Features:
+  - BTC solo miner base on esp32s3 series 
+  - Up to **118kH/s** 
+  - ssl connection support
+  - Screen auto off in 60s
+  - Real time clock
+  - Configuration on websever, it's easy enough to build your first BTC Miner.
+  - WiFi signal strength on screen.
+- Fixed:
+  - **Configuration of user BTC address not effective issue.**
+- Modify:
+  - Contact us, telegram group add.
+  - Modify firmware update tools, make it easy to update firmware.
+- Baord support
+  - [Heltec Vision Master T190](https://www.aliexpress.us/item/1005007449552504.html)
+
+### (2024.08.09) - v0.1.55
+- Features:
+  - BTC solo miner base on esp32s3 series 
+  - Up to **118kH/s** 
+  - ssl connection support
+  - Screen auto off in 60s
+  - Real time clock
+  - Configuration on websever, it's easy enough to build your first BTC Miner.
+  - WiFi signal strength on screen.
+- Fixed:
+  - Some ssl issues.
+- Modify:
+  - Add some log on loading screen.
+  - Hashrate upto 118K when screen off.
+- Baord support
+  - [Heltec Vision Master T190](https://www.aliexpress.us/item/1005007449552504.html)
+
+### (2024.08.02) - v0.1.54
+- Features:
+  - BTC solo miner base on esp32s3 series 
+  - Up to **117kH/s** 
+  - ssl connection support
+  - Screen auto off in 60s
+  - Real time clock
+  - Configuration on websever, it's easy enough to build your first BTC Miner.
+  - WiFi Signal Strength add.
+- Fixed:
+  - Some issues after full chip erase.
+- Modify:
+  - None
+- Baord support
+  - [Heltec Vision Master T190](https://www.aliexpress.us/item/1005007449552504.html)
+
+
+### (2024.08.01) - v0.1.53
+- Features:
+  - BTC solo miner base on esp32s3 series 
+  - Up to **117kH/s** 
+  - ssl connection support
+  - Screen auto off in 60s
+  - Real time clock
+  - Configuration on websever, it's easy enough to build your first BTC Miner.
+  - WiFi Signal Strength add.
+- Fixed:
+  - Fixed default WiFi parameters issues.
+  - Fixed parameter of 'screen off time out'.
+- Modify:
+  - Some nvs handles, not compatible with v0.1.52.
+- Baord support
+  - [Heltec Vision Master T190](https://www.aliexpress.us/item/1005007449552504.html)
+
+### (2024.07.31) - v0.1.52
+- Features:
+  - BTC solo miner base on esp32s3 series 
+  - Up to **117kH/s** 
+  - ssl connection support
+  - Screen auto off in 60s, can be setted from the Configuration Page
+  - Real-time clock
+  - Configuration on webserver, it's easy enough to build your first BTC Miner.
+- Fixed:
+  - First push 
+- Modify:
+  - None
+- Board support
+  - [Heltec Vision Master T190](https://www.aliexpress.us/item/1005007449552504.html)
