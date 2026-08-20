@@ -1,0 +1,4 @@
+[submodule "external/armada"]
+	path = external/armada
+	url = https://github.com/armada-os/armada.git
+	branch = main
