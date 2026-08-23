@@ -37,6 +37,7 @@ jobs:
           python3 wuzplay-cyberdeck-v8/firmware/source/fix_nfc_actions_makefile.py pixljs-source
           python3 wuzplay-cyberdeck-v8/firmware/source/fix_nfc_actions_headers.py pixljs-source
           python3 wuzplay-cyberdeck-v8/firmware/source/remove_amiibo_app_dependencies.py pixljs-source
+          python3 wuzplay-cyberdeck-v8/firmware/source/rename_legacy_nfc_labels.py pixljs-source
           python3 wuzplay-cyberdeck-v8/firmware/source/add_arcade_theme.py pixljs-source
           python3 wuzplay-cyberdeck-v8/firmware/source/force_all_apps.py pixljs-source
           python3 wuzplay-cyberdeck-v8/firmware/source/force_screen_rotation.py pixljs-source
@@ -62,6 +63,8 @@ jobs:
           grep -q 'NFC Actions' pixljs-source/fw/application/src/app/nfc_actions/app_nfc_actions.c
           grep -q 'Govee%20On' pixljs-source/fw/application/src/app/nfc_actions/app_nfc_actions.c
           grep -q 'CyberSync&mode=system' pixljs-source/fw/application/src/app/nfc_actions/app_nfc_actions.c
+          grep -q 'NFC Link' pixljs-source/fw/application/src/i18n/en_US.c
+          grep -q 'NFC Library' pixljs-source/fw/application/src/i18n/en_US.c
           grep -q 'cyber_hoops_2k_run' pixljs-source/fw/application/src/app/game/scene/game_scene_game_list.c
           grep -q 'cyber_fighter_run' pixljs-source/fw/application/src/app/game/scene/game_scene_game_list.c
           grep -q 'u8g2_font_likeminecraft_te' pixljs-source/fw/application/src/mui/view/mui_list_view.c
