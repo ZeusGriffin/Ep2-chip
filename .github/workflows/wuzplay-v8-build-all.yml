@@ -74,10 +74,10 @@ jobs:
           ! grep -q -- '-DAPP_LEGLAMIIBO_ENABLE' pixljs-source/fw/application/Makefile
           grep -q 'return_key_enabled' pixljs-source/fw/application/src/mod/settings.h
           grep -q 'display_flip' pixljs-source/fw/application/src/mod/settings.h
-          grep -q '(void)flipped; return U8G2_R2;' pixljs-source/fw/application/src/mui/mui_u8g2.c
+          grep -q '(void)flipped; return U8G2_MIRROR_VERTICAL;' pixljs-source/fw/application/src/mui/mui_u8g2.c
 
       - name: Build LCD firmware and Nordic DFU
-        run: cd pixljs-source/fw && make all BOARD=LCD RELEASE=1 APP_VERSION=802
+        run: cd pixljs-source/fw && make all BOARD=LCD RELEASE=1 APP_VERSION=803
 
       - name: Verify linked ELF symbols
         run: |
@@ -130,7 +130,7 @@ jobs:
           found = [x.decode() for x in forbidden if x in b]
           if found:
               raise SystemExit('forbidden Amiibo app labels present in binary: ' + repr(found))
-          zpath = Path('pixljs-source/fw/_build/pixjs_ota_v802.zip')
+          zpath = Path('pixljs-source/fw/_build/pixjs_ota_v803.zip')
           with zipfile.ZipFile(zpath) as z:
               names = set(z.namelist())
               if not {'manifest.json','pixljs.bin','pixljs.dat'} <= names:
@@ -142,15 +142,15 @@ jobs:
 
       - name: Prepare installable DFU
         run: |
-          cp pixljs-source/fw/_build/pixjs_ota_v802.zip 01_INSTALL_WUZPLAY_V8_ALL_IN_ONE_ROT2_DFU_KEEP_ZIPPED.zip
-          sha256sum 01_INSTALL_WUZPLAY_V8_ALL_IN_ONE_ROT2_DFU_KEEP_ZIPPED.zip > WUZPLAY_V8_ALL_IN_ONE_ROT2_SHA256.txt
+          cp pixljs-source/fw/_build/pixjs_ota_v803.zip 01_INSTALL_WUZPLAY_V8_ALL_IN_ONE_ROT2_REFLECT_DFU_KEEP_ZIPPED.zip
+          sha256sum 01_INSTALL_WUZPLAY_V8_ALL_IN_ONE_ROT2_REFLECT_DFU_KEEP_ZIPPED.zip > WUZPLAY_V8_ALL_IN_ONE_ROT2_REFLECT_SHA256.txt
 
       - uses: actions/upload-artifact@v4
         with:
-          name: WUZPLAY_V8_ALL_IN_ONE_ROT2_DFU
+          name: WUZPLAY_V8_ALL_IN_ONE_ROT2_REFLECT_DFU
           if-no-files-found: error
           path: |
-            01_INSTALL_WUZPLAY_V8_ALL_IN_ONE_ROT2_DFU_KEEP_ZIPPED.zip
-            WUZPLAY_V8_ALL_IN_ONE_ROT2_SHA256.txt
+            01_INSTALL_WUZPLAY_V8_ALL_IN_ONE_ROT2_REFLECT_DFU_KEEP_ZIPPED.zip
+            WUZPLAY_V8_ALL_IN_ONE_ROT2_REFLECT_SHA256.txt
             pixljs-source/fw/_build/pixljs.bin
             pixljs-source/fw/_build/pixljs_all.hex
