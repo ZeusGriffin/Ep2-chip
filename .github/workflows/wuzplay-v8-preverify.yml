@@ -1,0 +1,25 @@
+name: Wuzplay v8 preverify
+
+on:
+  push:
+    branches: [wuzplay-cyberdeck-v8-reconstruction]
+  pull_request:
+    paths:
+      - 'wuzplay-cyberdeck-v8/**'
+      - '.github/workflows/wuzplay-v8-preverify.yml'
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Rebuild NFC pack from source
+        run: python3 wuzplay-cyberdeck-v8/tools/make_nfc_pack.py --out wuzplay-cyberdeck-v8/nfc_pack
+      - name: Verify deterministic NFC pack
+        run: python3 wuzplay-cyberdeck-v8/tools/make_nfc_pack.py --out wuzplay-cyberdeck-v8/nfc_pack --check
+      - name: Verify source package
+        run: python3 wuzplay-cyberdeck-v8/tools/verify_release.py --root wuzplay-cyberdeck-v8 --allow-missing-dfu
+      - name: Syntax-check Scriptable companions
+        run: |
+          node --check wuzplay-cyberdeck-v8/companion/CyberSync.js
+          node --check wuzplay-cyberdeck-v8/companion/WuzSync.js
