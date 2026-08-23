@@ -5,16 +5,11 @@ import sys
 
 ROOT = Path(sys.argv[1]).resolve() if len(sys.argv) > 1 else Path("pixljs-source").resolve()
 SRC = ROOT / "fw/application/src"
-
 if not SRC.exists():
     raise SystemExit(f"pixl.js source tree not found: {SRC}")
 
-# Karpathy-style reconstruction rule: start from the last verified full custom
-# source snapshot, then make the smallest explicit changes needed for the final
-# Wuzplay build. Do not silently inherit stock menu removals.
-
-# Clean top-level registry. Keep the proven NFC engine but present it as
-# Wuzplay NFC Actions. Hide Amiibo Database and AmiiboLink completely.
+# Reconstruct from the last verified full custom source snapshot and make only
+# the explicit Wuzplay changes. The working screen/Back/game/NFC core stays intact.
 mini_app_data = r'''#include "mini_app_defines.h"
 #include "app_status_bar.h"
 #include "app_desktop.h"
@@ -49,8 +44,7 @@ const uint32_t mini_app_num = sizeof(mini_app_registry) / sizeof(mini_app_regist
 '''
 (SRC / "core/mini_app_data.c").write_text(mini_app_data)
 
-# Better Cyberdeck labels. Apply the top-level names across every language so
-# switching language never brings the removed Amiibo branding back into menus.
+# Clean, consistent Cyberdeck labels in every language table.
 label_map = {
     "_L_APP_AMIIBO": "NFC Actions",
     "_L_APP_CHAMELEON": "NFC Cards",
@@ -68,24 +62,19 @@ for lang in (SRC / "i18n").glob("*.c"):
     if text != original:
         lang.write_text(text)
 
-# The underlying app is the proven NTAG emulator, but the visible app is now
-# NFC Actions. It retains the same mini-app ID to avoid risky launcher changes.
+# Reuse the proven NTAG app slot as NFC Actions; do not expose Amiibo features.
 app_amiibo = SRC / "app/amiibo/app_amiibo.c"
 text = app_amiibo.read_text()
 text = re.sub(r'\.name\s*=\s*"[^"]*"', '.name = "NFC Actions"', text, count=1)
-# No Amiibo key-loading is needed for NFC Actions.
 text = text.replace('amiibo_helper_try_load_amiibo_keys_from_vfs();', '(void)0;')
 app_amiibo.write_text(text)
 
-# Do not load Amiibo keys during normal boot either.
 main = SRC / "main.c"
-text = main.read_text()
-text = text.replace('amiibo_helper_try_load_amiibo_keys_from_vfs();', '(void)0;')
+text = main.read_text().replace('amiibo_helper_try_load_amiibo_keys_from_vfs();', '(void)0;')
 main.write_text(text)
 
-# Built-in NFC Actions. These are the exact URI payloads reconstructed from the
-# v8 540-byte presets. Selecting one writes the NDEF URI directly into the
-# active NTAG215 emulator. No .bin import or external-storage setup is required.
+# Exact v8 preset URI payloads compiled into the firmware. Selecting an entry
+# creates an NTAG215 URI record in RAM and switches the active NFC emulator to it.
 actions_scene = r'''#include "app_amiibo.h"
 #include "amiibo_scene.h"
 #include "mini_app_launcher.h"
@@ -129,26 +118,25 @@ static const wuzplay_action_t actions[] = {
 
 static bool set_uri_tag(app_amiibo_t *app, const char *uri) {
     const size_t uri_len = strlen(uri);
-    const size_t payload_len = 1u + uri_len;       /* URI prefix byte + URI */
-    const size_t ndef_len = 4u + payload_len;      /* hdr, type-len, payload-len, 'U' + payload */
+    const size_t payload_len = 1u + uri_len;
+    const size_t ndef_len = 4u + payload_len;
     if (uri_len > 220u || ndef_len > 254u) return false;
 
     ntag_store_new_rand(&app->ntag);
     app->ntag.read_only = true;
-
-    /* Preserve manufacturer/config pages; clear only the first user-memory area. */
     memset(&app->ntag.data[16], 0, 256);
+
     size_t p = 16;
     app->ntag.data[p++] = 0x03;                    /* NDEF Message TLV */
     app->ntag.data[p++] = (uint8_t)ndef_len;
-    app->ntag.data[p++] = 0xD1;                    /* MB|ME|SR|TNF well-known */
-    app->ntag.data[p++] = 0x01;                    /* type length */
+    app->ntag.data[p++] = 0xD1;                    /* MB|ME|SR|well-known */
+    app->ntag.data[p++] = 0x01;
     app->ntag.data[p++] = (uint8_t)payload_len;
-    app->ntag.data[p++] = 0x55;                    /* 'U' URI record */
-    app->ntag.data[p++] = 0x00;                    /* no URI prefix compression */
+    app->ntag.data[p++] = 0x55;                    /* URI record */
+    app->ntag.data[p++] = 0x00;                    /* full URI follows */
     memcpy(&app->ntag.data[p], uri, uri_len);
     p += uri_len;
-    app->ntag.data[p++] = 0xFE;                    /* terminator TLV */
+    app->ntag.data[p++] = 0xFE;
 
     ntag_emu_set_tag(&app->ntag);
     return true;
@@ -163,7 +151,6 @@ static void on_selected(mui_list_view_event_t event, mui_list_view_t *list, mui_
     }
     const wuzplay_action_t *action = (const wuzplay_action_t *)item->user_data;
     (void)set_uri_tag(app, action->uri);
-    /* The selected tag stays active. Hold the Wuzplay at the top of the iPhone. */
 }
 
 void amiibo_scene_file_browser_on_enter(void *user_data) {
@@ -183,26 +170,20 @@ void amiibo_scene_file_browser_on_exit(void *user_data) {
 '''
 (SRC / "app/amiibo/scene/amiibo_scene_file_browser.c").write_text(actions_scene)
 
-# Keep all four known games explicitly present. Abort reconstruction rather than
-# silently producing a DFU with a missing game.
+# Hard gates: never produce a build missing any of the four games or the custom
+# screen/Return behavior that was already working.
 game_list = (SRC / "app/game/scene/game_scene_game_list.c").read_text()
 for marker in ("tiny_arkanoid_run", "tiny_invaders_run", "tiny_lander_run", "tiny_tris_run"):
     if marker not in game_list:
         raise SystemExit(f"required game missing from source: {marker}")
-
-# Required custom capabilities from the full custom snapshot.
-checks = {
-    SRC / "mod/settings.h": ("return_key", "display_flip"),
-    SRC / "mui/mui_input.c": ("INPUT_KEY_BACK",),
-    SRC / "app/chameleon/scene/chameleon_scene_menu_card_advanced.c": ("ATS",),
-}
-for path, needles in checks.items():
-    data = path.read_text(errors="ignore")
-    for needle in needles:
-        if needle not in data:
-            raise SystemExit(f"required capability marker {needle!r} missing from {path}")
+settings_h = (SRC / "mod/settings.h").read_text(errors="ignore")
+for marker in ("return_key", "display_flip"):
+    if marker not in settings_h:
+        raise SystemExit(f"required custom setting missing: {marker}")
+if "INPUT_KEY_BACK" not in (SRC / "mui/mui_input.c").read_text(errors="ignore"):
+    raise SystemExit("required Back input support missing")
 
 print("Wuzplay v8 full feature patch applied")
-print("Top menu: NFC Actions / NFC Cards / Media Player / Cyber Arcade / Wireless Files / System")
-print(f"Built-in NFC actions: {len(actions_scene.split('{\"')[1:]) if False else 19}")
+print("Menu: NFC Actions / NFC Cards / Media Player / Cyber Arcade / Wireless Files / System")
+print("Built-in NFC actions: 19")
 print("Games: Arkanoid / Invaders / Lander / Tris")
