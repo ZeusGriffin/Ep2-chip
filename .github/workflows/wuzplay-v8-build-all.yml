@@ -34,6 +34,7 @@ jobs:
       - name: Apply Wuzplay v8 all-in-one feature patch
         run: |
           python3 wuzplay-cyberdeck-v8/firmware/source/apply_wuzplay_v8.py pixljs-source
+          python3 wuzplay-cyberdeck-v8/firmware/source/remove_amiibo_app_dependencies.py pixljs-source
           python3 wuzplay-cyberdeck-v8/firmware/source/add_arcade_theme.py pixljs-source
           python3 wuzplay-cyberdeck-v8/firmware/source/force_all_apps.py pixljs-source
           python3 wuzplay-cyberdeck-v8/firmware/source/force_screen_rotation.py pixljs-source
@@ -50,6 +51,8 @@ jobs:
           ! grep -q 'app_amiibo_info' pixljs-source/fw/application/src/core/mini_app_data.c
           ! grep -q 'app_amiidb_info' pixljs-source/fw/application/src/core/mini_app_data.c
           ! grep -q 'app_amiibolink_info' pixljs-source/fw/application/src/core/mini_app_data.c
+          ! grep -q 'app_amiibolink.h' pixljs-source/fw/application/src/mod/settings.h
+          grep -q 'ble_amiibolink.h' pixljs-source/fw/application/src/mod/settings.h
           grep -q 'app_nfc_actions_info' pixljs-source/fw/application/src/core/mini_app_data.c
           grep -q 'NFC Actions' pixljs-source/fw/application/src/app/nfc_actions/app_nfc_actions.c
           grep -q 'Govee%20On' pixljs-source/fw/application/src/app/nfc_actions/app_nfc_actions.c
