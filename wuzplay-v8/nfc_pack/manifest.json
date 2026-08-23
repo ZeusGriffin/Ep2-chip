@@ -1,0 +1,25 @@
+{
+  "release": "Wuzplay Cyberdeck v8",
+  "note": "These are NFC companion presets, not DFU firmware.",
+  "presets": {
+    "cybersync_system.bin": "scriptable:///run?scriptName=CyberSync&mode=system",
+    "cybersync_dashboard.bin": "scriptable:///run?scriptName=CyberSync&mode=dashboard",
+    "cybersync_network.bin": "scriptable:///run?scriptName=CyberSync&mode=network",
+    "cybersync_tools.bin": "scriptable:///run?scriptName=CyberSync&mode=tools",
+    "cybersync_alerts.bin": "scriptable:///run?scriptName=CyberSync&mode=alerts",
+    "cybersync_all.bin": "scriptable:///run?scriptName=CyberSync&mode=all",
+    "open_wuzsync.bin": "scriptable:///run?scriptName=WuzSync",
+    "drive_home.bin": "shortcuts://run-shortcut?name=Drive%20Home",
+    "find_car.bin": "shortcuts://run-shortcut?name=Find%20Car",
+    "flashlight.bin": "shortcuts://run-shortcut?name=Flashlight",
+    "quick_note.bin": "shortcuts://run-shortcut?name=Quick%20Note",
+    "timer_10m.bin": "shortcuts://run-shortcut?name=10%20Minute%20Timer",
+    "govee_on.bin": "shortcuts://run-shortcut?name=Govee%20On",
+    "govee_off.bin": "shortcuts://run-shortcut?name=Govee%20Off",
+    "govee_bright.bin": "shortcuts://run-shortcut?name=Govee%20Bright",
+    "govee_relax.bin": "shortcuts://run-shortcut?name=Govee%20Relax",
+    "govee_movie.bin": "shortcuts://run-shortcut?name=Govee%20Movie",
+    "govee_red.bin": "shortcuts://run-shortcut?name=Govee%20Red",
+    "govee_blue.bin": "shortcuts://run-shortcut?name=Govee%20Blue"
+  }
+}
