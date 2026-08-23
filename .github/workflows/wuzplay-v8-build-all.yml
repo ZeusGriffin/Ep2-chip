@@ -35,6 +35,7 @@ jobs:
         run: |
           python3 wuzplay-cyberdeck-v8/firmware/source/apply_wuzplay_v8.py pixljs-source
           python3 wuzplay-cyberdeck-v8/firmware/source/add_arcade_theme.py pixljs-source
+          python3 wuzplay-cyberdeck-v8/firmware/source/force_all_apps.py pixljs-source
 
       - name: Static feature gate
         run: |
@@ -44,18 +45,29 @@ jobs:
           grep -q 'NFC Actions' pixljs-source/fw/application/src/app/amiibo/app_amiibo.c
           grep -q 'Govee%20On' pixljs-source/fw/application/src/app/amiibo/scene/amiibo_scene_file_browser.c
           grep -q 'CyberSync&mode=system' pixljs-source/fw/application/src/app/amiibo/scene/amiibo_scene_file_browser.c
-          grep -q 'tiny_arkanoid_run' pixljs-source/fw/application/src/app/game/scene/game_scene_game_list.c
-          grep -q 'tiny_invaders_run' pixljs-source/fw/application/src/app/game/scene/game_scene_game_list.c
-          grep -q 'tiny_lander_run' pixljs-source/fw/application/src/app/game/scene/game_scene_game_list.c
-          grep -q 'tiny_tris_run' pixljs-source/fw/application/src/app/game/scene/game_scene_game_list.c
           grep -q 'cyber_hoops_2k_run' pixljs-source/fw/application/src/app/game/scene/game_scene_game_list.c
           grep -q 'cyber_fighter_run' pixljs-source/fw/application/src/app/game/scene/game_scene_game_list.c
           grep -q 'u8g2_font_likeminecraft_te' pixljs-source/fw/application/src/mui/view/mui_list_view.c
+          grep -q -- '-DAPP_GAME_ENABLE' pixljs-source/fw/application/Makefile
+          grep -q -- '-DAPP_PLAYER_ENABLE' pixljs-source/fw/application/Makefile
+          grep -q -- '-DAPP_LEGLAMIIBO_ENABLE' pixljs-source/fw/application/Makefile
           grep -q 'return_key_enabled' pixljs-source/fw/application/src/mod/settings.h
           grep -q 'display_flip' pixljs-source/fw/application/src/mod/settings.h
 
       - name: Build LCD firmware and Nordic DFU
         run: cd pixljs-source/fw && make all BOARD=LCD RELEASE=1 APP_VERSION=800
+
+      - name: Verify linked ELF symbols
+        run: |
+          set -eu
+          NM=arm-none-eabi-nm
+          ELF=pixljs-source/fw/_build/pixljs.out
+          for symbol in \
+            app_amiibo_info app_chameleon_info app_player_info app_game_info app_ble_info \
+            tiny_arkanoid_run tiny_invaders_run tiny_lander_run tiny_tris_run \
+            cyber_hoops_2k_run cyber_fighter_run; do
+            $NM "$ELF" | grep -q " $symbol$"
+          done
 
       - name: Verify compiled binary features
         run: |
@@ -94,7 +106,8 @@ jobs:
               names = set(z.namelist())
               if not {'manifest.json','pixljs.bin','pixljs.dat'} <= names:
                   raise SystemExit('Nordic DFU members missing: ' + repr(names))
-              z.testzip()
+              if z.testzip() is not None:
+                  raise SystemExit('DFU zip CRC test failed')
           print('compiled feature verification: PASS')
           PY
 
