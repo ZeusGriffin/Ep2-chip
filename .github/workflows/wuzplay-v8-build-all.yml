@@ -22,11 +22,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Fetch verified custom source base
+      - name: Fetch exact full custom source snapshot
         run: |
-          git clone https://github.com/xndvaz/pixl.js.git pixljs-source
+          git clone --filter=blob:none --no-checkout https://github.com/solosky/pixl.js.git pixljs-source
           cd pixljs-source
-          git checkout 74a505a948a1cfedd296b0033239f74b4090c420
+          git fetch origin refs/pull/457/head:refs/remotes/origin/wuzplay-custom-pr457
+          git checkout refs/remotes/origin/wuzplay-custom-pr457
+          test "$(git rev-parse HEAD)" = "74a505a948a1cfedd296b0033239f74b4090c420"
           git submodule update --init --recursive
 
       - name: Apply Wuzplay v8 all-in-one feature patch
