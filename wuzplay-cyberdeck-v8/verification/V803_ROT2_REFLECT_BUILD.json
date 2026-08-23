@@ -1,0 +1,26 @@
+{
+  "release": "Wuzplay v8 all-in-one v803",
+  "orientation_source": "g.setRotation(2, true)",
+  "orientation_semantics": "Espruino rotation 2 sets INVERT_X|INVERT_Y; reflect=true toggles INVERT_X, leaving INVERT_Y",
+  "firmware_transform": "U8G2_MIRROR_VERTICAL",
+  "dfu_file": "01_INSTALL_WUZPLAY_V8_ALL_IN_ONE_ROT2_REFLECT_DFU_KEEP_ZIPPED.zip",
+  "dfu_sha256": "ceba40f45a4c136a506a6fed18d7f22fb4697332792aeab71e67afa300aae1fc",
+  "dfu_members": ["manifest.json", "pixljs.bin", "pixljs.dat"],
+  "pixljs_bin_size": 268004,
+  "ci_run_id": 32641694981,
+  "ci_artifact_id": 9493787522,
+  "source_head_before_merge": "403e9fdfeb2a26ab290f103efeda59b15bc73be4",
+  "merge_commit": "cc3fa19088bad5d5accdca4abcbedaece5ae648b",
+  "checks": {
+    "source_patch": "passed",
+    "static_feature_gate": "passed",
+    "lcd_compile": "passed",
+    "linked_symbols": "passed",
+    "compiled_feature_scan": "passed",
+    "nordic_dfu_members": "passed",
+    "zip_crc": "passed",
+    "artifact_packaging": "passed",
+    "local_recheck": "passed",
+    "physical_screen_test": "pending"
+  }
+}
