@@ -6,6 +6,10 @@ on:
     paths:
       - 'wuzplay-cyberdeck-v8/firmware/source/**'
       - '.github/workflows/wuzplay-v8-build-all.yml'
+  pull_request:
+    paths:
+      - 'wuzplay-cyberdeck-v8/firmware/source/**'
+      - '.github/workflows/wuzplay-v8-build-all.yml'
   workflow_dispatch:
 
 permissions:
@@ -26,7 +30,9 @@ jobs:
           git submodule update --init --recursive
 
       - name: Apply Wuzplay v8 all-in-one feature patch
-        run: python3 wuzplay-cyberdeck-v8/firmware/source/apply_wuzplay_v8.py pixljs-source
+        run: |
+          python3 wuzplay-cyberdeck-v8/firmware/source/apply_wuzplay_v8.py pixljs-source
+          python3 wuzplay-cyberdeck-v8/firmware/source/add_arcade_theme.py pixljs-source
 
       - name: Static feature gate
         run: |
@@ -40,6 +46,9 @@ jobs:
           grep -q 'tiny_invaders_run' pixljs-source/fw/application/src/app/game/scene/game_scene_game_list.c
           grep -q 'tiny_lander_run' pixljs-source/fw/application/src/app/game/scene/game_scene_game_list.c
           grep -q 'tiny_tris_run' pixljs-source/fw/application/src/app/game/scene/game_scene_game_list.c
+          grep -q 'cyber_hoops_2k_run' pixljs-source/fw/application/src/app/game/scene/game_scene_game_list.c
+          grep -q 'cyber_fighter_run' pixljs-source/fw/application/src/app/game/scene/game_scene_game_list.c
+          grep -q 'u8g2_font_likeminecraft_te' pixljs-source/fw/application/src/mui/view/mui_list_view.c
           grep -q 'return_key_enabled' pixljs-source/fw/application/src/mod/settings.h
           grep -q 'display_flip' pixljs-source/fw/application/src/mod/settings.h
 
@@ -54,7 +63,7 @@ jobs:
           b = Path('pixljs-source/fw/_build/pixljs.bin').read_bytes()
           required = [
               b'NFC Actions', b'NFC Cards', b'Media Player', b'Cyber Arcade', b'Wireless Files',
-              b'Arkanoid', b'Invaders', b'Lander', b'Tris',
+              b'Arkanoid', b'Invaders', b'Lander', b'Tris', b'Cyber Hoops 2K', b'Cyber Fighter',
               b'scriptable:///run?scriptName=CyberSync&mode=system',
               b'scriptable:///run?scriptName=CyberSync&mode=dashboard',
               b'scriptable:///run?scriptName=CyberSync&mode=network',
