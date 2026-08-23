@@ -38,6 +38,7 @@ jobs:
           python3 wuzplay-cyberdeck-v8/firmware/source/fix_nfc_actions_headers.py pixljs-source
           python3 wuzplay-cyberdeck-v8/firmware/source/remove_amiibo_app_dependencies.py pixljs-source
           python3 wuzplay-cyberdeck-v8/firmware/source/rename_legacy_nfc_labels.py pixljs-source
+          python3 wuzplay-cyberdeck-v8/firmware/source/scrub_legacy_amiibo_strings.py pixljs-source
           python3 wuzplay-cyberdeck-v8/firmware/source/add_arcade_theme.py pixljs-source
           python3 wuzplay-cyberdeck-v8/firmware/source/force_all_apps.py pixljs-source
           python3 wuzplay-cyberdeck-v8/firmware/source/force_screen_rotation.py pixljs-source
