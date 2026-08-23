@@ -212,27 +212,20 @@ mini_app_t app_nfc_actions_info = {
 };
 ''')
 
-# Strip every app-level Amiibo/AmiiboDB/AmiiboLink source/include from the build,
-# then add the standalone NFC Actions source/include.
+# Strip all app-level Amiibo/AmiiboDB/AmiiboLink source/include entries.
 mk = MAKEFILE.read_text()
-filtered = []
-for line in mk.splitlines(True):
-    if "$(PROJ_DIR)/app/amiibo" in line or "$(PROJ_DIR)/app/amiidb" in line or "$(PROJ_DIR)/app/amiibolink" in line:
-        continue
-    filtered.append(line)
-mk = "".join(filtered)
+mk = "".join(
+    line for line in mk.splitlines(True)
+    if "$(PROJ_DIR)/app/amiibo" not in line
+    and "$(PROJ_DIR)/app/amiidb" not in line
+    and "$(PROJ_DIR)/app/amiibolink" not in line
+)
 
-src_anchor = "  $(PROJ_DIR)/app/desktop/app_desktop.c \\\n"
+# Add the standalone NFC Actions app without fragile Makefile continuation edits.
 if "app/nfc_actions/app_nfc_actions.c" not in mk:
-    if src_anchor not in mk:
-        raise SystemExit("desktop source anchor not found in Makefile")
-    mk = mk.replace(src_anchor, src_anchor + "  $(PROJ_DIR)/app/nfc_actions/app_nfc_actions.c \\\n", 1)
-
-inc_anchor = "  $(PROJ_DIR)/app/desktop/view \\\n"
-if "$(PROJ_DIR)/app/nfc_actions \\\" not in mk:
-    if inc_anchor not in mk:
-        raise SystemExit("desktop include anchor not found in Makefile")
-    mk = mk.replace(inc_anchor, inc_anchor + "  $(PROJ_DIR)/app/nfc_actions \\\n", 1)
+    mk += "\nSRC_FILES += $(PROJ_DIR)/app/nfc_actions/app_nfc_actions.c\n"
+if "INC_FOLDERS += $(PROJ_DIR)/app/nfc_actions" not in mk:
+    mk += "INC_FOLDERS += $(PROJ_DIR)/app/nfc_actions\n"
 MAKEFILE.write_text(mk)
 
 # Remove the application directories from the generated source tree so there is
@@ -253,8 +246,9 @@ for marker in ("return_key", "display_flip"):
         raise SystemExit(f"required custom setting missing: {marker}")
 if "INPUT_KEY_BACK" not in (SRC / "mui/mui_input.c").read_text(errors="ignore"):
     raise SystemExit("required Back input support missing")
-if (SRC / "app/amiibo").exists():
-    raise SystemExit("Amiibo app folder must not exist in final generated source")
+for rel in ("app/amiibo", "app/amiidb", "app/amiibolink"):
+    if (SRC / rel).exists():
+        raise SystemExit(f"forbidden app folder still exists: {rel}")
 
 print("Wuzplay v8 full feature patch applied")
 print("NFC Actions lives only in app/nfc_actions")
