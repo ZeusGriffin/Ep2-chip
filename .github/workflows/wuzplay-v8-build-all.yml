@@ -2,7 +2,7 @@ name: Wuzplay v8 all-in-one DFU
 
 on:
   push:
-    branches: [wuzplay-cyberdeck-v8-reconstruction]
+    branches: [main, wuzplay-cyberdeck-v8-reconstruction, wuzplay-v8-no-amiibo-folder]
     paths:
       - 'wuzplay-cyberdeck-v8/firmware/source/**'
       - '.github/workflows/wuzplay-v8-build-all.yml'
@@ -34,28 +34,50 @@ jobs:
       - name: Apply Wuzplay v8 all-in-one feature patch
         run: |
           python3 wuzplay-cyberdeck-v8/firmware/source/apply_wuzplay_v8.py pixljs-source
+          python3 wuzplay-cyberdeck-v8/firmware/source/fix_nfc_actions_makefile.py pixljs-source
+          python3 wuzplay-cyberdeck-v8/firmware/source/fix_nfc_actions_headers.py pixljs-source
+          python3 wuzplay-cyberdeck-v8/firmware/source/remove_amiibo_app_dependencies.py pixljs-source
+          python3 wuzplay-cyberdeck-v8/firmware/source/rename_legacy_nfc_labels.py pixljs-source
+          python3 wuzplay-cyberdeck-v8/firmware/source/scrub_legacy_amiibo_strings.py pixljs-source
           python3 wuzplay-cyberdeck-v8/firmware/source/add_arcade_theme.py pixljs-source
           python3 wuzplay-cyberdeck-v8/firmware/source/force_all_apps.py pixljs-source
+          python3 wuzplay-cyberdeck-v8/firmware/source/force_screen_rotation.py pixljs-source
 
       - name: Static feature gate
         run: |
           set -eu
-          ! grep -q '&app_amiidb_info' pixljs-source/fw/application/src/core/mini_app_data.c
-          ! grep -q '&app_amiibolink_info' pixljs-source/fw/application/src/core/mini_app_data.c
-          grep -q 'NFC Actions' pixljs-source/fw/application/src/app/amiibo/app_amiibo.c
-          grep -q 'Govee%20On' pixljs-source/fw/application/src/app/amiibo/scene/amiibo_scene_file_browser.c
-          grep -q 'CyberSync&mode=system' pixljs-source/fw/application/src/app/amiibo/scene/amiibo_scene_file_browser.c
+          test ! -d pixljs-source/fw/application/src/app/amiibo
+          test ! -d pixljs-source/fw/application/src/app/amiidb
+          test ! -d pixljs-source/fw/application/src/app/amiibolink
+          ! grep -q '$(PROJ_DIR)/app/amiibo' pixljs-source/fw/application/Makefile
+          ! grep -q '$(PROJ_DIR)/app/amiidb' pixljs-source/fw/application/Makefile
+          ! grep -q '$(PROJ_DIR)/app/amiibolink' pixljs-source/fw/application/Makefile
+          ! grep -q 'app_amiibo_info' pixljs-source/fw/application/src/core/mini_app_data.c
+          ! grep -q 'app_amiidb_info' pixljs-source/fw/application/src/core/mini_app_data.c
+          ! grep -q 'app_amiibolink_info' pixljs-source/fw/application/src/core/mini_app_data.c
+          ! grep -q 'app_amiibolink.h' pixljs-source/fw/application/src/mod/settings.h
+          grep -q 'ble_amiibolink.h' pixljs-source/fw/application/src/mod/settings.h
+          test "$(grep -c '$(PROJ_DIR)/app/nfc_actions/app_nfc_actions.c' pixljs-source/fw/application/Makefile)" = 1
+          test "$(grep -c '$(PROJ_DIR)/app/nfc_actions \\' pixljs-source/fw/application/Makefile)" = 1
+          grep -q 'mui_list_view.h' pixljs-source/fw/application/src/app/nfc_actions/app_nfc_actions.h
+          grep -q 'app_nfc_actions_info' pixljs-source/fw/application/src/core/mini_app_data.c
+          grep -q 'NFC Actions' pixljs-source/fw/application/src/app/nfc_actions/app_nfc_actions.c
+          grep -q 'Govee%20On' pixljs-source/fw/application/src/app/nfc_actions/app_nfc_actions.c
+          grep -q 'CyberSync&mode=system' pixljs-source/fw/application/src/app/nfc_actions/app_nfc_actions.c
+          grep -q 'NFC Link' pixljs-source/fw/application/src/i18n/en_US.c
+          grep -q 'NFC Library' pixljs-source/fw/application/src/i18n/en_US.c
           grep -q 'cyber_hoops_2k_run' pixljs-source/fw/application/src/app/game/scene/game_scene_game_list.c
           grep -q 'cyber_fighter_run' pixljs-source/fw/application/src/app/game/scene/game_scene_game_list.c
           grep -q 'u8g2_font_likeminecraft_te' pixljs-source/fw/application/src/mui/view/mui_list_view.c
           grep -q -- '-DAPP_GAME_ENABLE' pixljs-source/fw/application/Makefile
           grep -q -- '-DAPP_PLAYER_ENABLE' pixljs-source/fw/application/Makefile
-          grep -q -- '-DAPP_LEGLAMIIBO_ENABLE' pixljs-source/fw/application/Makefile
+          ! grep -q -- '-DAPP_LEGLAMIIBO_ENABLE' pixljs-source/fw/application/Makefile
           grep -q 'return_key_enabled' pixljs-source/fw/application/src/mod/settings.h
           grep -q 'display_flip' pixljs-source/fw/application/src/mod/settings.h
+          grep -q '(void)flipped; return U8G2_R2;' pixljs-source/fw/application/src/mui/mui_u8g2.c
 
       - name: Build LCD firmware and Nordic DFU
-        run: cd pixljs-source/fw && make all BOARD=LCD RELEASE=1 APP_VERSION=800
+        run: cd pixljs-source/fw && make all BOARD=LCD RELEASE=1 APP_VERSION=802
 
       - name: Verify linked ELF symbols
         run: |
@@ -63,11 +85,14 @@ jobs:
           NM=arm-none-eabi-nm
           ELF=pixljs-source/fw/_build/pixljs.out
           for symbol in \
-            app_amiibo_info app_chameleon_info app_player_info app_game_info app_ble_info \
+            app_nfc_actions_info app_chameleon_info app_player_info app_game_info app_ble_info \
             tiny_arkanoid_run tiny_invaders_run tiny_lander_run tiny_tris_run \
             cyber_hoops_2k_run cyber_fighter_run; do
             $NM "$ELF" | grep -q " $symbol$"
           done
+          ! $NM "$ELF" | grep -q ' app_amiibo_info$'
+          ! $NM "$ELF" | grep -q ' app_amiidb_info$'
+          ! $NM "$ELF" | grep -q ' app_amiibolink_info$'
 
       - name: Verify compiled binary features
         run: |
@@ -101,7 +126,11 @@ jobs:
           missing = [x.decode() for x in required if x not in b]
           if missing:
               raise SystemExit('compiled feature verification failed: ' + repr(missing))
-          zpath = Path('pixljs-source/fw/_build/pixjs_ota_v800.zip')
+          forbidden = [b'Amiibo Database', b'AmiiboLink']
+          found = [x.decode() for x in forbidden if x in b]
+          if found:
+              raise SystemExit('forbidden Amiibo app labels present in binary: ' + repr(found))
+          zpath = Path('pixljs-source/fw/_build/pixjs_ota_v802.zip')
           with zipfile.ZipFile(zpath) as z:
               names = set(z.namelist())
               if not {'manifest.json','pixljs.bin','pixljs.dat'} <= names:
@@ -113,15 +142,15 @@ jobs:
 
       - name: Prepare installable DFU
         run: |
-          cp pixljs-source/fw/_build/pixjs_ota_v800.zip 01_INSTALL_WUZPLAY_V8_ALL_IN_ONE_DFU_KEEP_ZIPPED.zip
-          sha256sum 01_INSTALL_WUZPLAY_V8_ALL_IN_ONE_DFU_KEEP_ZIPPED.zip > WUZPLAY_V8_ALL_IN_ONE_SHA256.txt
+          cp pixljs-source/fw/_build/pixjs_ota_v802.zip 01_INSTALL_WUZPLAY_V8_ALL_IN_ONE_ROT2_DFU_KEEP_ZIPPED.zip
+          sha256sum 01_INSTALL_WUZPLAY_V8_ALL_IN_ONE_ROT2_DFU_KEEP_ZIPPED.zip > WUZPLAY_V8_ALL_IN_ONE_ROT2_SHA256.txt
 
       - uses: actions/upload-artifact@v4
         with:
-          name: WUZPLAY_V8_ALL_IN_ONE_DFU
+          name: WUZPLAY_V8_ALL_IN_ONE_ROT2_DFU
           if-no-files-found: error
           path: |
-            01_INSTALL_WUZPLAY_V8_ALL_IN_ONE_DFU_KEEP_ZIPPED.zip
-            WUZPLAY_V8_ALL_IN_ONE_SHA256.txt
+            01_INSTALL_WUZPLAY_V8_ALL_IN_ONE_ROT2_DFU_KEEP_ZIPPED.zip
+            WUZPLAY_V8_ALL_IN_ONE_ROT2_SHA256.txt
             pixljs-source/fw/_build/pixljs.bin
             pixljs-source/fw/_build/pixljs_all.hex

@@ -1,19 +1,21 @@
 #!/usr/bin/env python3
 from pathlib import Path
 import re
+import shutil
 import sys
 
 ROOT = Path(sys.argv[1]).resolve() if len(sys.argv) > 1 else Path("pixljs-source").resolve()
 SRC = ROOT / "fw/application/src"
+MAKEFILE = ROOT / "fw/application/Makefile"
 if not SRC.exists():
     raise SystemExit(f"pixl.js source tree not found: {SRC}")
 
-# Reconstruct from the last verified full custom source snapshot and make only
-# the explicit Wuzplay changes. The working screen/Back/game/NFC core stays intact.
+# Keep the proven custom base, but do not reuse or modify any Amiibo application
+# directory. NFC Actions is its own app under app/nfc_actions.
 mini_app_data = r'''#include "mini_app_defines.h"
 #include "app_status_bar.h"
 #include "app_desktop.h"
-#include "app_amiibo.h"
+#include "app_nfc_actions.h"
 #include "app_ble.h"
 #include "app_player.h"
 #include "app_settings.h"
@@ -24,9 +26,7 @@ mini_app_data = r'''#include "mini_app_defines.h"
 const mini_app_t* mini_app_registry[] = {
     &app_status_bar_info,
     &app_desktop_info,
-#ifdef APP_LEGLAMIIBO_ENABLE
-    &app_amiibo_info,
-#endif
+    &app_nfc_actions_info,
     &app_chameleon_info,
 #ifdef APP_PLAYER_ENABLE
     &app_player_info,
@@ -34,9 +34,7 @@ const mini_app_t* mini_app_registry[] = {
 #ifdef APP_GAME_ENABLE
     &app_game_info,
 #endif
-#ifdef APP_LEGLAMIIBO_ENABLE
     &app_ble_info,
-#endif
     &app_settings_info
 };
 
@@ -44,7 +42,6 @@ const uint32_t mini_app_num = sizeof(mini_app_registry) / sizeof(mini_app_regist
 '''
 (SRC / "core/mini_app_data.c").write_text(mini_app_data)
 
-# Clean, consistent Cyberdeck labels in every language table.
 label_map = {
     "_L_APP_AMIIBO": "NFC Actions",
     "_L_APP_CHAMELEON": "NFC Cards",
@@ -62,21 +59,36 @@ for lang in (SRC / "i18n").glob("*.c"):
     if text != original:
         lang.write_text(text)
 
-# Reuse the proven NTAG app slot as NFC Actions; do not expose Amiibo features.
-app_amiibo = SRC / "app/amiibo/app_amiibo.c"
-text = app_amiibo.read_text()
-text = re.sub(r'\.name\s*=\s*"[^"]*"', '.name = "NFC Actions"', text, count=1)
-text = text.replace('amiibo_helper_try_load_amiibo_keys_from_vfs();', '(void)0;')
-app_amiibo.write_text(text)
-
+# Remove the legacy key-loading call; NFC Actions uses plain URI NTAG records.
 main = SRC / "main.c"
 text = main.read_text().replace('amiibo_helper_try_load_amiibo_keys_from_vfs();', '(void)0;')
 main.write_text(text)
 
-# Exact v8 preset URI payloads compiled into the firmware. Selecting an entry
-# creates an NTAG215 URI record in RAM and switches the active NFC emulator to it.
-actions_scene = r'''#include "app_amiibo.h"
-#include "amiibo_scene.h"
+# Dedicated NFC Actions app. MINI_APP_ID_AMIIBO is retained only as the numeric
+# legacy slot identifier to avoid a risky enum/layout migration; no Amiibo app
+# source is built and no custom code is placed in an Amiibo directory.
+nfc_dir = SRC / "app/nfc_actions"
+nfc_dir.mkdir(parents=True, exist_ok=True)
+(nfc_dir / "app_nfc_actions.h").write_text(r'''#ifndef APP_NFC_ACTIONS_H
+#define APP_NFC_ACTIONS_H
+
+#include "mini_app_defines.h"
+#include "mui_include.h"
+#include "ntag_def.h"
+
+typedef struct {
+    mui_view_dispatcher_t *p_view_dispatcher;
+    mui_list_view_t *p_list_view;
+    ntag_t ntag;
+} app_nfc_actions_t;
+
+extern mini_app_t app_nfc_actions_info;
+
+#endif
+''')
+
+(nfc_dir / "app_nfc_actions.c").write_text(r'''#include "app_nfc_actions.h"
+#include "i18n/language.h"
 #include "mini_app_launcher.h"
 #include "mini_app_registry.h"
 #include "ntag_emu.h"
@@ -85,9 +97,6 @@ actions_scene = r'''#include "app_amiibo.h"
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
-
-#define ICON_ACTION 0xe1ed
-#define ICON_HOME   0xe1f0
 
 typedef struct {
     const char *label;
@@ -116,7 +125,7 @@ static const wuzplay_action_t actions[] = {
     {"10m Timer", "shortcuts://run-shortcut?name=10%20Minute%20Timer"},
 };
 
-static bool set_uri_tag(app_amiibo_t *app, const char *uri) {
+static bool set_uri_tag(app_nfc_actions_t *app, const char *uri) {
     const size_t uri_len = strlen(uri);
     const size_t payload_len = 1u + uri_len;
     const size_t ndef_len = 4u + payload_len;
@@ -127,13 +136,13 @@ static bool set_uri_tag(app_amiibo_t *app, const char *uri) {
     memset(&app->ntag.data[16], 0, 256);
 
     size_t p = 16;
-    app->ntag.data[p++] = 0x03;                    /* NDEF Message TLV */
+    app->ntag.data[p++] = 0x03;
     app->ntag.data[p++] = (uint8_t)ndef_len;
-    app->ntag.data[p++] = 0xD1;                    /* MB|ME|SR|well-known */
+    app->ntag.data[p++] = 0xD1;
     app->ntag.data[p++] = 0x01;
     app->ntag.data[p++] = (uint8_t)payload_len;
-    app->ntag.data[p++] = 0x55;                    /* URI record */
-    app->ntag.data[p++] = 0x00;                    /* full URI follows */
+    app->ntag.data[p++] = 0x55;
+    app->ntag.data[p++] = 0x00;
     memcpy(&app->ntag.data[p], uri, uri_len);
     p += uri_len;
     app->ntag.data[p++] = 0xFE;
@@ -142,10 +151,10 @@ static bool set_uri_tag(app_amiibo_t *app, const char *uri) {
     return true;
 }
 
-static void on_selected(mui_list_view_event_t event, mui_list_view_t *list, mui_list_item_t *item) {
+static void nfc_actions_selected(mui_list_view_event_t event, mui_list_view_t *list, mui_list_item_t *item) {
     if (event != MUI_LIST_VIEW_EVENT_SELECTED) return;
-    app_amiibo_t *app = list->user_data;
-    if (item->icon == ICON_HOME || item->user_data == NULL) {
+    app_nfc_actions_t *app = list->user_data;
+    if (item->icon == ICON_BACK || item->user_data == NULL) {
         mini_app_launcher_kill(mini_app_launcher(), MINI_APP_ID_AMIIBO);
         return;
     }
@@ -153,25 +162,80 @@ static void on_selected(mui_list_view_event_t event, mui_list_view_t *list, mui_
     (void)set_uri_tag(app, action->uri);
 }
 
-void amiibo_scene_file_browser_on_enter(void *user_data) {
-    app_amiibo_t *app = user_data;
-    mui_list_view_clear_items(app->p_list_view);
-    mui_list_view_add_item(app->p_list_view, ICON_HOME, "Back", NULL);
+static void app_nfc_actions_on_run(mini_app_inst_t *p_app_inst) {
+    app_nfc_actions_t *app = mui_mem_malloc(sizeof(app_nfc_actions_t));
+    memset(app, 0, sizeof(*app));
+    p_app_inst->p_handle = app;
+
+    app->p_view_dispatcher = mui_view_dispatcher_create();
+    app->p_list_view = mui_list_view_create();
+    mui_list_view_set_user_data(app->p_list_view, app);
+    mui_list_view_set_selected_cb(app->p_list_view, nfc_actions_selected);
+
+    mui_list_view_add_item(app->p_list_view, ICON_BACK, "Back", NULL);
     for (size_t i = 0; i < sizeof(actions) / sizeof(actions[0]); ++i) {
-        mui_list_view_add_item(app->p_list_view, ICON_ACTION, actions[i].label, (void *)&actions[i]);
+        mui_list_view_add_item(app->p_list_view, ICON_FILE, actions[i].label, (void *)&actions[i]);
     }
-    mui_list_view_set_selected_cb(app->p_list_view, on_selected);
-    mui_view_dispatcher_switch_to_view(app->p_view_dispatcher, AMIIBO_VIEW_ID_LIST);
+
+    mui_view_dispatcher_add_view(app->p_view_dispatcher, 0, mui_list_view_get_view(app->p_list_view));
+    mui_view_dispatcher_attach(app->p_view_dispatcher, MUI_LAYER_FULLSCREEN);
+    mui_view_dispatcher_switch_to_view(app->p_view_dispatcher, 0);
 }
 
-void amiibo_scene_file_browser_on_exit(void *user_data) {
-    (void)user_data;
+static void app_nfc_actions_on_kill(mini_app_inst_t *p_app_inst) {
+    app_nfc_actions_t *app = p_app_inst->p_handle;
+    if (!app) return;
+    mui_view_dispatcher_detach(app->p_view_dispatcher, MUI_LAYER_FULLSCREEN);
+    mui_view_dispatcher_free(app->p_view_dispatcher);
+    mui_list_view_free(app->p_list_view);
+    mui_mem_free(app);
+    p_app_inst->p_handle = NULL;
 }
-'''
-(SRC / "app/amiibo/scene/amiibo_scene_file_browser.c").write_text(actions_scene)
 
-# Hard gates: never produce a build missing any of the four games or the custom
-# screen/Return behavior that was already working.
+static void app_nfc_actions_on_event(mini_app_inst_t *p_app_inst, mini_app_event_t *p_event) {
+    (void)p_app_inst;
+    (void)p_event;
+}
+
+mini_app_t app_nfc_actions_info = {
+    .id = MINI_APP_ID_AMIIBO,
+    .name = "NFC Actions",
+    .name_i18n_key = _L_APP_AMIIBO,
+    .icon = 0xe1ed,
+    .deamon = false,
+    .sys = false,
+    .hibernate_enabled = false,
+    .icon_32x32 = &app_card_emulator_32x32,
+    .run_cb = app_nfc_actions_on_run,
+    .kill_cb = app_nfc_actions_on_kill,
+    .on_event_cb = app_nfc_actions_on_event,
+};
+''')
+
+# Strip all app-level Amiibo/AmiiboDB/AmiiboLink source/include entries.
+mk = MAKEFILE.read_text()
+mk = "".join(
+    line for line in mk.splitlines(True)
+    if "$(PROJ_DIR)/app/amiibo" not in line
+    and "$(PROJ_DIR)/app/amiidb" not in line
+    and "$(PROJ_DIR)/app/amiibolink" not in line
+)
+
+# Add the standalone NFC Actions app without fragile Makefile continuation edits.
+if "app/nfc_actions/app_nfc_actions.c" not in mk:
+    mk += "\nSRC_FILES += $(PROJ_DIR)/app/nfc_actions/app_nfc_actions.c\n"
+if "INC_FOLDERS += $(PROJ_DIR)/app/nfc_actions" not in mk:
+    mk += "INC_FOLDERS += $(PROJ_DIR)/app/nfc_actions\n"
+MAKEFILE.write_text(mk)
+
+# Remove the application directories from the generated source tree so there is
+# literally no app/amiibo folder in the firmware build workspace.
+for rel in ("app/amiibo", "app/amiidb", "app/amiibolink"):
+    p = SRC / rel
+    if p.exists():
+        shutil.rmtree(p)
+
+# Hard gates.
 game_list = (SRC / "app/game/scene/game_scene_game_list.c").read_text()
 for marker in ("tiny_arkanoid_run", "tiny_invaders_run", "tiny_lander_run", "tiny_tris_run"):
     if marker not in game_list:
@@ -182,8 +246,12 @@ for marker in ("return_key", "display_flip"):
         raise SystemExit(f"required custom setting missing: {marker}")
 if "INPUT_KEY_BACK" not in (SRC / "mui/mui_input.c").read_text(errors="ignore"):
     raise SystemExit("required Back input support missing")
+for rel in ("app/amiibo", "app/amiidb", "app/amiibolink"):
+    if (SRC / rel).exists():
+        raise SystemExit(f"forbidden app folder still exists: {rel}")
 
 print("Wuzplay v8 full feature patch applied")
-print("Menu: NFC Actions / NFC Cards / Media Player / Cyber Arcade / Wireless Files / System")
+print("NFC Actions lives only in app/nfc_actions")
+print("Amiibo/AmiiboDB/AmiiboLink app folders removed from generated build")
 print("Built-in NFC actions: 19")
 print("Games: Arkanoid / Invaders / Lander / Tris")

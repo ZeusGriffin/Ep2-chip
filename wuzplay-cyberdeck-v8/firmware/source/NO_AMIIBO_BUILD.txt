@@ -1,0 +1,5 @@
+Wuzplay v8.0.1 build invariant
+
+NFC Actions must live under app/nfc_actions.
+The generated firmware build must not contain app/amiibo, app/amiidb, or app/amiibolink directories.
+The visible Amiibo Database and AmiiboLink applications are not part of this build.
