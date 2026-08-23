@@ -1,0 +1,103 @@
+name: Wuzplay v8 all-in-one DFU
+
+on:
+  push:
+    branches: [wuzplay-cyberdeck-v8-reconstruction]
+    paths:
+      - 'wuzplay-cyberdeck-v8/firmware/source/**'
+      - '.github/workflows/wuzplay-v8-build-all.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-lcd:
+    runs-on: ubuntu-latest
+    container: solosky/nrf52-sdk:latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch verified custom source base
+        run: |
+          git clone https://github.com/xndvaz/pixl.js.git pixljs-source
+          cd pixljs-source
+          git checkout 74a505a948a1cfedd296b0033239f74b4090c420
+          git submodule update --init --recursive
+
+      - name: Apply Wuzplay v8 all-in-one feature patch
+        run: python3 wuzplay-cyberdeck-v8/firmware/source/apply_wuzplay_v8.py pixljs-source
+
+      - name: Static feature gate
+        run: |
+          set -eu
+          ! grep -q '&app_amiidb_info' pixljs-source/fw/application/src/core/mini_app_data.c
+          ! grep -q '&app_amiibolink_info' pixljs-source/fw/application/src/core/mini_app_data.c
+          grep -q 'NFC Actions' pixljs-source/fw/application/src/app/amiibo/app_amiibo.c
+          grep -q 'Govee%20On' pixljs-source/fw/application/src/app/amiibo/scene/amiibo_scene_file_browser.c
+          grep -q 'CyberSync&mode=system' pixljs-source/fw/application/src/app/amiibo/scene/amiibo_scene_file_browser.c
+          grep -q 'tiny_arkanoid_run' pixljs-source/fw/application/src/app/game/scene/game_scene_game_list.c
+          grep -q 'tiny_invaders_run' pixljs-source/fw/application/src/app/game/scene/game_scene_game_list.c
+          grep -q 'tiny_lander_run' pixljs-source/fw/application/src/app/game/scene/game_scene_game_list.c
+          grep -q 'tiny_tris_run' pixljs-source/fw/application/src/app/game/scene/game_scene_game_list.c
+          grep -q 'return_key_enabled' pixljs-source/fw/application/src/mod/settings.h
+          grep -q 'display_flip' pixljs-source/fw/application/src/mod/settings.h
+
+      - name: Build LCD firmware and Nordic DFU
+        run: cd pixljs-source/fw && make all BOARD=LCD RELEASE=1 APP_VERSION=800
+
+      - name: Verify compiled binary features
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import zipfile
+          b = Path('pixljs-source/fw/_build/pixljs.bin').read_bytes()
+          required = [
+              b'NFC Actions', b'NFC Cards', b'Media Player', b'Cyber Arcade', b'Wireless Files',
+              b'Arkanoid', b'Invaders', b'Lander', b'Tris',
+              b'scriptable:///run?scriptName=CyberSync&mode=system',
+              b'scriptable:///run?scriptName=CyberSync&mode=dashboard',
+              b'scriptable:///run?scriptName=CyberSync&mode=network',
+              b'scriptable:///run?scriptName=CyberSync&mode=tools',
+              b'scriptable:///run?scriptName=CyberSync&mode=alerts',
+              b'scriptable:///run?scriptName=CyberSync&mode=all',
+              b'scriptable:///run?scriptName=WuzSync',
+              b'shortcuts://run-shortcut?name=Govee%20On',
+              b'shortcuts://run-shortcut?name=Govee%20Off',
+              b'shortcuts://run-shortcut?name=Govee%20Bright',
+              b'shortcuts://run-shortcut?name=Govee%20Relax',
+              b'shortcuts://run-shortcut?name=Govee%20Movie',
+              b'shortcuts://run-shortcut?name=Govee%20Red',
+              b'shortcuts://run-shortcut?name=Govee%20Blue',
+              b'shortcuts://run-shortcut?name=Drive%20Home',
+              b'shortcuts://run-shortcut?name=Find%20Car',
+              b'shortcuts://run-shortcut?name=Flashlight',
+              b'shortcuts://run-shortcut?name=Quick%20Note',
+              b'shortcuts://run-shortcut?name=10%20Minute%20Timer',
+          ]
+          missing = [x.decode() for x in required if x not in b]
+          if missing:
+              raise SystemExit('compiled feature verification failed: ' + repr(missing))
+          zpath = Path('pixljs-source/fw/_build/pixjs_ota_v800.zip')
+          with zipfile.ZipFile(zpath) as z:
+              names = set(z.namelist())
+              if not {'manifest.json','pixljs.bin','pixljs.dat'} <= names:
+                  raise SystemExit('Nordic DFU members missing: ' + repr(names))
+              z.testzip()
+          print('compiled feature verification: PASS')
+          PY
+
+      - name: Prepare installable DFU
+        run: |
+          cp pixljs-source/fw/_build/pixjs_ota_v800.zip 01_INSTALL_WUZPLAY_V8_ALL_IN_ONE_DFU_KEEP_ZIPPED.zip
+          sha256sum 01_INSTALL_WUZPLAY_V8_ALL_IN_ONE_DFU_KEEP_ZIPPED.zip > WUZPLAY_V8_ALL_IN_ONE_SHA256.txt
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: WUZPLAY_V8_ALL_IN_ONE_DFU
+          if-no-files-found: error
+          path: |
+            01_INSTALL_WUZPLAY_V8_ALL_IN_ONE_DFU_KEEP_ZIPPED.zip
+            WUZPLAY_V8_ALL_IN_ONE_SHA256.txt
+            pixljs-source/fw/_build/pixljs.bin
+            pixljs-source/fw/_build/pixljs_all.hex
