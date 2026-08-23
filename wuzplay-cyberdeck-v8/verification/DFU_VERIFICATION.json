@@ -1,0 +1,15 @@
+{
+  "release": "Wuzplay Cyberdeck v8",
+  "dfu_archive": "01_INSTALL_WUZPLAY_DFU_KEEP_ZIPPED.zip",
+  "archive_sha256": "bd383930bed88376c3c39e839d46ca513d2b5f61c1b8cb63233ce4d1ce1aeea6",
+  "zip_integrity": "passed",
+  "required_members": ["manifest.json", "pixljs.bin", "pixljs.dat"],
+  "manifest_mapping": {"bin_file": "pixljs.bin", "dat_file": "pixljs.dat"},
+  "sizes": {"manifest.json": 137, "pixljs.bin": 372364, "pixljs.dat": 141},
+  "sha256": {
+    "manifest.json": "089c4e8e2d2f0958da9e0dd559bf14b1be6f05dd7685efa6a938dc6f5aba97fc",
+    "pixljs.bin": "722942a6a12f9851736c204932300d66bf231b2b425c4c5c873cf0b0da4041ad",
+    "pixljs.dat": "ba62b0c53e158928c5573e85b9850bd7e8d005c7709a68c7c8221880d37a98d3"
+  },
+  "note": "Gold DFU was locally verified byte-for-byte before repository publication."
+}

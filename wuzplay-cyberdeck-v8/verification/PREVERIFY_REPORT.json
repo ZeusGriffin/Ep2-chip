@@ -1,0 +1,23 @@
+{
+  "release": "Wuzplay Cyberdeck v8",
+  "method": "artifact-first Karpathy reconstruction",
+  "passed": true,
+  "checks": {
+    "dfu_archive_sha256": "passed",
+    "zip_integrity": "passed",
+    "required_dfu_members": "passed",
+    "manifest_mapping": "passed",
+    "manifest_json_size_hash": "passed",
+    "pixljs_bin_size_hash": "passed",
+    "pixljs_dat_size_hash": "passed",
+    "custom_binary_markers": "16/16 passed",
+    "govee_companion_separation": "passed",
+    "nfc_preset_count": "19/19 passed",
+    "nfc_ntag215_ndef_validation": "19/19 passed",
+    "CyberSync_js_syntax": "passed",
+    "WuzSync_js_syntax": "passed"
+  },
+  "gold_archive_sha256": "bd383930bed88376c3c39e839d46ca513d2b5f61c1b8cb63233ce4d1ce1aeea6",
+  "gold_pixljs_bin_sha256": "722942a6a12f9851736c204932300d66bf231b2b425c4c5c873cf0b0da4041ad",
+  "hardware_flash_test": "not performed in chat environment"
+}
