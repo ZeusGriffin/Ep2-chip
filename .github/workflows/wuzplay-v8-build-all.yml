@@ -44,7 +44,7 @@ jobs:
           python3 wuzplay-cyberdeck-v8/firmware/source/force_screen_rotation.py pixljs-source
           python3 wuzplay-cyberdeck-v8/firmware/source/fix_lcd_backlight.py pixljs-source
 
-      - name: Static feature, navigation, display, and backlight gate
+      - name: Static feature, navigation, display, backlight, and LCD-fit gate
         run: |
           set -eu
           test ! -d pixljs-source/fw/application/src/app/amiibo
@@ -63,19 +63,12 @@ jobs:
           grep -q 'mui_list_view.h' pixljs-source/fw/application/src/app/nfc_actions/app_nfc_actions.h
           grep -q 'app_nfc_actions_info' pixljs-source/fw/application/src/core/mini_app_data.c
           grep -q 'NFC Actions' pixljs-source/fw/application/src/app/nfc_actions/app_nfc_actions.c
-          grep -q 'Govee%20On' pixljs-source/fw/application/src/app/nfc_actions/app_nfc_actions.c
-          grep -q 'Govee%20Off' pixljs-source/fw/application/src/app/nfc_actions/app_nfc_actions.c
-          grep -q 'Govee%20Bright' pixljs-source/fw/application/src/app/nfc_actions/app_nfc_actions.c
-          grep -q 'Govee%20Relax' pixljs-source/fw/application/src/app/nfc_actions/app_nfc_actions.c
-          grep -q 'Govee%20Movie' pixljs-source/fw/application/src/app/nfc_actions/app_nfc_actions.c
-          grep -q 'Govee%20Red' pixljs-source/fw/application/src/app/nfc_actions/app_nfc_actions.c
-          grep -q 'Govee%20Blue' pixljs-source/fw/application/src/app/nfc_actions/app_nfc_actions.c
+          for name in On Off Bright Relax Movie Red Blue; do grep -q "Govee%20${name}" pixljs-source/fw/application/src/app/nfc_actions/app_nfc_actions.c; done
           grep -q 'CyberSync&mode=system' pixljs-source/fw/application/src/app/nfc_actions/app_nfc_actions.c
           grep -q 'NFC Link' pixljs-source/fw/application/src/i18n/en_US.c
           grep -q 'NFC Library' pixljs-source/fw/application/src/i18n/en_US.c
           grep -q 'cyber_hoops_2k_run' pixljs-source/fw/application/src/app/game/scene/game_scene_game_list.c
           grep -q 'cyber_fighter_run' pixljs-source/fw/application/src/app/game/scene/game_scene_game_list.c
-          grep -q 'u8g2_font_likeminecraft_te' pixljs-source/fw/application/src/mui/view/mui_list_view.c
           grep -q -- '-DAPP_GAME_ENABLE' pixljs-source/fw/application/Makefile
           grep -q -- '-DAPP_PLAYER_ENABLE' pixljs-source/fw/application/Makefile
           ! grep -q -- '-DAPP_LEGLAMIIBO_ENABLE' pixljs-source/fw/application/Makefile
@@ -93,9 +86,13 @@ jobs:
           grep -q 'mui_progress_bar_set_min_value(app->p_progress_bar, 10);' pixljs-source/fw/application/src/app/settings/scene/settings_scene_lcd_backlight.c
           grep -q 'mui_progress_bar_set_max_value(app->p_progress_bar, 100);' pixljs-source/fw/application/src/app/settings/scene/settings_scene_lcd_backlight.c
           grep -q 'mui_u8g2_set_backlight_level(g_lcd_backlight_original);' pixljs-source/fw/application/src/app/settings/scene/settings_scene_lcd_backlight.c
+          grep -q '#define LIST_ITEM_HEIGHT 10' pixljs-source/fw/application/src/mui/view/mui_list_view.c
+          grep -q 'u8g2_font_5x7_tr' pixljs-source/fw/application/src/mui/view/mui_list_view.c
+          grep -q 'uint32_t focus_h = 9;' pixljs-source/fw/application/src/mui/view/mui_list_view.c
+          ! grep -q 'u8g2_font_wqy12_t_gb2312a' pixljs-source/fw/application/src/mui/view/mui_list_view.c
 
       - name: Build LCD firmware and Nordic DFU
-        run: cd pixljs-source/fw && make all BOARD=LCD RELEASE=1 APP_VERSION=805
+        run: cd pixljs-source/fw && make all BOARD=LCD RELEASE=1 APP_VERSION=806
 
       - name: Verify linked ELF symbols
         run: |
@@ -151,7 +148,7 @@ jobs:
           found = [x.decode() for x in forbidden if x in b]
           if found:
               raise SystemExit('forbidden Amiibo app labels present in binary: ' + repr(found))
-          zpath = Path('pixljs-source/fw/_build/pixjs_ota_v805.zip')
+          zpath = Path('pixljs-source/fw/_build/pixjs_ota_v806.zip')
           with zipfile.ZipFile(zpath) as z:
               names = set(z.namelist())
               if not {'manifest.json','pixljs.bin','pixljs.dat'} <= names:
@@ -163,15 +160,15 @@ jobs:
 
       - name: Prepare installable DFU
         run: |
-          cp pixljs-source/fw/_build/pixjs_ota_v805.zip WUZPLAY_V805_SCREEN_FIXED_BRIGHT_BACKLIGHT_ALL_IN_ONE_DFU_DO_NOT_UNZIP.zip
-          sha256sum WUZPLAY_V805_SCREEN_FIXED_BRIGHT_BACKLIGHT_ALL_IN_ONE_DFU_DO_NOT_UNZIP.zip > WUZPLAY_V805_SCREEN_FIXED_BRIGHT_BACKLIGHT_SHA256.txt
+          cp pixljs-source/fw/_build/pixjs_ota_v806.zip WUZPLAY_V806_SCREEN_FIXED_BRIGHT_BACKLIGHT_SMALL_TEXT_ALL_IN_ONE_DFU_DO_NOT_UNZIP.zip
+          sha256sum WUZPLAY_V806_SCREEN_FIXED_BRIGHT_BACKLIGHT_SMALL_TEXT_ALL_IN_ONE_DFU_DO_NOT_UNZIP.zip > WUZPLAY_V806_SHA256.txt
 
       - uses: actions/upload-artifact@v4
         with:
-          name: WUZPLAY_V805_SCREEN_FIXED_BRIGHT_BACKLIGHT_ALL_IN_ONE_DFU
+          name: WUZPLAY_V806_SCREEN_FIXED_BRIGHT_BACKLIGHT_SMALL_TEXT_ALL_IN_ONE_DFU
           if-no-files-found: error
           path: |
-            WUZPLAY_V805_SCREEN_FIXED_BRIGHT_BACKLIGHT_ALL_IN_ONE_DFU_DO_NOT_UNZIP.zip
-            WUZPLAY_V805_SCREEN_FIXED_BRIGHT_BACKLIGHT_SHA256.txt
+            WUZPLAY_V806_SCREEN_FIXED_BRIGHT_BACKLIGHT_SMALL_TEXT_ALL_IN_ONE_DFU_DO_NOT_UNZIP.zip
+            WUZPLAY_V806_SHA256.txt
             pixljs-source/fw/_build/pixljs.bin
             pixljs-source/fw/_build/pixljs_all.hex
