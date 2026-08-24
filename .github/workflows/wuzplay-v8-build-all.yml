@@ -2,7 +2,7 @@ name: Wuzplay v8 all-in-one DFU
 
 on:
   push:
-    branches: [main, wuzplay-cyberdeck-v8-reconstruction, wuzplay-v8-no-amiibo-folder, wuzplay-v8-screen-upright-v804]
+    branches: [main, wuzplay-cyberdeck-v8-reconstruction, wuzplay-v8-no-amiibo-folder, wuzplay-v8-screen-upright-v804, wuzplay-v8-backlight-v805]
     paths:
       - 'wuzplay-cyberdeck-v8/firmware/source/**'
       - '.github/workflows/wuzplay-v8-build-all.yml'
@@ -42,8 +42,9 @@ jobs:
           python3 wuzplay-cyberdeck-v8/firmware/source/add_arcade_theme.py pixljs-source
           python3 wuzplay-cyberdeck-v8/firmware/source/force_all_apps.py pixljs-source
           python3 wuzplay-cyberdeck-v8/firmware/source/force_screen_rotation.py pixljs-source
+          python3 wuzplay-cyberdeck-v8/firmware/source/fix_lcd_backlight.py pixljs-source
 
-      - name: Static feature and navigation gate
+      - name: Static feature, navigation, display, and backlight gate
         run: |
           set -eu
           test ! -d pixljs-source/fw/application/src/app/amiibo
@@ -63,6 +64,12 @@ jobs:
           grep -q 'app_nfc_actions_info' pixljs-source/fw/application/src/core/mini_app_data.c
           grep -q 'NFC Actions' pixljs-source/fw/application/src/app/nfc_actions/app_nfc_actions.c
           grep -q 'Govee%20On' pixljs-source/fw/application/src/app/nfc_actions/app_nfc_actions.c
+          grep -q 'Govee%20Off' pixljs-source/fw/application/src/app/nfc_actions/app_nfc_actions.c
+          grep -q 'Govee%20Bright' pixljs-source/fw/application/src/app/nfc_actions/app_nfc_actions.c
+          grep -q 'Govee%20Relax' pixljs-source/fw/application/src/app/nfc_actions/app_nfc_actions.c
+          grep -q 'Govee%20Movie' pixljs-source/fw/application/src/app/nfc_actions/app_nfc_actions.c
+          grep -q 'Govee%20Red' pixljs-source/fw/application/src/app/nfc_actions/app_nfc_actions.c
+          grep -q 'Govee%20Blue' pixljs-source/fw/application/src/app/nfc_actions/app_nfc_actions.c
           grep -q 'CyberSync&mode=system' pixljs-source/fw/application/src/app/nfc_actions/app_nfc_actions.c
           grep -q 'NFC Link' pixljs-source/fw/application/src/i18n/en_US.c
           grep -q 'NFC Library' pixljs-source/fw/application/src/i18n/en_US.c
@@ -80,9 +87,15 @@ jobs:
           grep -q '(void)flipped; return U8G2_R0;' pixljs-source/fw/application/src/mui/mui_u8g2.c
           ! grep -q '(void)flipped; return U8G2_MIRROR_VERTICAL;' pixljs-source/fw/application/src/mui/mui_u8g2.c
           ! grep -q '(void)flipped; return U8G2_R2;' pixljs-source/fw/application/src/mui/mui_u8g2.c
+          grep -q '.lcd_backlight = 100,' pixljs-source/fw/application/src/mod/settings.c
+          grep -q 'm_settings_data.lcd_backlight == 0.*m_settings_data.lcd_backlight = 100' pixljs-source/fw/application/src/mod/settings.c
+          ! grep -q 'INT8_VALIDATE(m_settings_data.lcd_backlight, 0, 100, 0);' pixljs-source/fw/application/src/mod/settings.c
+          grep -q 'mui_progress_bar_set_min_value(app->p_progress_bar, 10);' pixljs-source/fw/application/src/app/settings/scene/settings_scene_lcd_backlight.c
+          grep -q 'mui_progress_bar_set_max_value(app->p_progress_bar, 100);' pixljs-source/fw/application/src/app/settings/scene/settings_scene_lcd_backlight.c
+          grep -q 'mui_u8g2_set_backlight_level(g_lcd_backlight_original);' pixljs-source/fw/application/src/app/settings/scene/settings_scene_lcd_backlight.c
 
       - name: Build LCD firmware and Nordic DFU
-        run: cd pixljs-source/fw && make all BOARD=LCD RELEASE=1 APP_VERSION=804
+        run: cd pixljs-source/fw && make all BOARD=LCD RELEASE=1 APP_VERSION=805
 
       - name: Verify linked ELF symbols
         run: |
@@ -92,7 +105,8 @@ jobs:
           for symbol in \
             app_nfc_actions_info app_chameleon_info app_player_info app_game_info app_ble_info \
             tiny_arkanoid_run tiny_invaders_run tiny_lander_run tiny_tris_run \
-            cyber_hoops_2k_run cyber_fighter_run; do
+            cyber_hoops_2k_run cyber_fighter_run \
+            mui_u8g2_set_backlight_level; do
             $NM "$ELF" | grep -q " $symbol$"
           done
           ! $NM "$ELF" | grep -q ' app_amiibo_info$'
@@ -137,7 +151,7 @@ jobs:
           found = [x.decode() for x in forbidden if x in b]
           if found:
               raise SystemExit('forbidden Amiibo app labels present in binary: ' + repr(found))
-          zpath = Path('pixljs-source/fw/_build/pixjs_ota_v804.zip')
+          zpath = Path('pixljs-source/fw/_build/pixjs_ota_v805.zip')
           with zipfile.ZipFile(zpath) as z:
               names = set(z.namelist())
               if not {'manifest.json','pixljs.bin','pixljs.dat'} <= names:
@@ -149,15 +163,15 @@ jobs:
 
       - name: Prepare installable DFU
         run: |
-          cp pixljs-source/fw/_build/pixjs_ota_v804.zip 01_INSTALL_WUZPLAY_V8_ALL_IN_ONE_SCREEN_CORRECTED_DFU_KEEP_ZIPPED.zip
-          sha256sum 01_INSTALL_WUZPLAY_V8_ALL_IN_ONE_SCREEN_CORRECTED_DFU_KEEP_ZIPPED.zip > WUZPLAY_V8_ALL_IN_ONE_SCREEN_CORRECTED_SHA256.txt
+          cp pixljs-source/fw/_build/pixjs_ota_v805.zip WUZPLAY_V805_SCREEN_FIXED_BRIGHT_BACKLIGHT_ALL_IN_ONE_DFU_DO_NOT_UNZIP.zip
+          sha256sum WUZPLAY_V805_SCREEN_FIXED_BRIGHT_BACKLIGHT_ALL_IN_ONE_DFU_DO_NOT_UNZIP.zip > WUZPLAY_V805_SCREEN_FIXED_BRIGHT_BACKLIGHT_SHA256.txt
 
       - uses: actions/upload-artifact@v4
         with:
-          name: WUZPLAY_V8_ALL_IN_ONE_SCREEN_CORRECTED_DFU
+          name: WUZPLAY_V805_SCREEN_FIXED_BRIGHT_BACKLIGHT_ALL_IN_ONE_DFU
           if-no-files-found: error
           path: |
-            01_INSTALL_WUZPLAY_V8_ALL_IN_ONE_SCREEN_CORRECTED_DFU_KEEP_ZIPPED.zip
-            WUZPLAY_V8_ALL_IN_ONE_SCREEN_CORRECTED_SHA256.txt
+            WUZPLAY_V805_SCREEN_FIXED_BRIGHT_BACKLIGHT_ALL_IN_ONE_DFU_DO_NOT_UNZIP.zip
+            WUZPLAY_V805_SCREEN_FIXED_BRIGHT_BACKLIGHT_SHA256.txt
             pixljs-source/fw/_build/pixljs.bin
             pixljs-source/fw/_build/pixljs_all.hex
