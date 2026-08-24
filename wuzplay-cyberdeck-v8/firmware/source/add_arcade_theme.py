@@ -7,17 +7,19 @@ SRC = ROOT / 'fw/application/src'
 if not SRC.exists():
     raise SystemExit(f'pixl.js source tree not found: {SRC}')
 
-# Compact monochrome tech typography: use the already bundled small pixel font
-# in list-based UI. This is an original dot/pixel-tech treatment inspired by the
-# clean Nothing aesthetic, not a copy of a proprietary Nothing font.
+# Compact LCD typography. Use the already-linked small pixel font so the menu
+# stays build-safe while remaining much smaller than the original 12px UI.
+# Ten-pixel rows fit six complete rows on the 64px LCD. The existing clip/scroll
+# behavior remains available for unusually long labels.
 list_view = SRC / 'mui/view/mui_list_view.c'
 text = list_view.read_text()
-text = text.replace('#define LIST_ITEM_HEIGHT 13', '#define LIST_ITEM_HEIGHT 11')
+text = text.replace('#define LIST_ITEM_HEIGHT 13', '#define LIST_ITEM_HEIGHT 10')
 text = text.replace('u8g2_font_wqy12_t_gb2312a', 'u8g2_font_likeminecraft_te')
+text = text.replace('actual_y + 10, item->icon', 'actual_y + 8, item->icon')
 text = text.replace('actual_y + 10, string_get_cstr(item->text)', 'actual_y + 8, string_get_cstr(item->text)')
 text = text.replace('actual_y + 10,\n                                              string_get_cstr(item->sub_text)', 'actual_y + 8,\n                                              string_get_cstr(item->sub_text)')
 text = text.replace('actual_y + 10,\n                                         string_get_cstr(item->sub_text)', 'actual_y + 8,\n                                         string_get_cstr(item->sub_text)')
-text = text.replace('uint32_t focus_h = 12;', 'uint32_t focus_h = 10;')
+text = text.replace('uint32_t focus_h = 12;', 'uint32_t focus_h = 9;')
 list_view.write_text(text)
 
 # Two additional native games requested for the all-in-one build. They use the
@@ -109,13 +111,13 @@ int cyber_hoops_2k_run(void) {
         }
 
         clear_fb();
-        hline(0,127,58);                  /* floor */
-        vline(119,14,38);                 /* backboard */
-        hline(108,119,27);                /* rim */
-        rect(112,28,6,7);                 /* net */
-        rect(player_x,43,8,15);           /* player body */
-        fill_rect(player_x+2,39,4,4);     /* head */
-        fill_rect(ball_x-1,ball_y-1,3,3); /* ball */
+        hline(0,127,58);
+        vline(119,14,38);
+        hline(108,119,27);
+        rect(112,28,6,7);
+        rect(player_x,43,8,15);
+        fill_rect(player_x+2,39,4,4);
+        fill_rect(ball_x-1,ball_y-1,3,3);
         draw_score_pips(score,3,3);
         flush_fb();
         JOY_idle();
@@ -125,8 +127,8 @@ int cyber_hoops_2k_run(void) {
 }
 
 static void fighter_sprite(int x, int y, bool punch) {
-    fill_rect(x+3,y,4,4);                 /* head */
-    rect(x+2,y+5,6,11);                   /* torso */
+    fill_rect(x+3,y,4,4);
+    rect(x+2,y+5,6,11);
     vline(x+3,y+16,y+24); vline(x+7,y+16,y+24);
     if (punch) hline(x+8,x+15,y+8);
     else { hline(x-2,x+2,y+8); hline(x+8,x+11,y+8); }
@@ -173,7 +175,6 @@ int cyber_fighter_run(void) {
         fighter_sprite(ax,30,false);
         if (punch_frames) punch_frames--;
         if (!php || !ahp) {
-            /* center marker: left = player win, right = CPU win */
             if (ahp == 0) fill_rect(55,18,7,7); else fill_rect(67,18,7,7);
         }
         flush_fb();
@@ -189,7 +190,6 @@ int cyber_fighter_run(void) {
 }
 ''')
 
-# Add the new source to the firmware build.
 makefile = ROOT / 'fw/application/Makefile'
 mk = makefile.read_text()
 needle = '  $(PROJ_DIR)/app/game/port/common/driver.c \\\n'
@@ -200,7 +200,6 @@ if 'cyber_games/cyber_games.c' not in mk:
     mk = mk.replace(needle, addition, 1)
 makefile.write_text(mk)
 
-# Add both games to Cyber Arcade while preserving all four verified historical games.
 game_list = SRC / 'app/game/scene/game_scene_game_list.c'
 gl = game_list.read_text()
 if '#include "cyber_games.h"' not in gl:
@@ -212,19 +211,20 @@ if 'cyber_hoops_2k_run' not in gl:
     gl = gl.replace(anchor, anchor + '\n    mui_list_view_add_item(app->p_list_view, ICON_FILE, "Cyber Hoops 2K", cyber_hoops_2k_run);\n    mui_list_view_add_item(app->p_list_view, ICON_FILE, "Cyber Fighter", cyber_fighter_run);')
 game_list.write_text(gl)
 
-# Ensure the header is visible from the existing game include search path by
-# adding the directory next to the other game port include directories.
-# The project Makefile derives include dirs explicitly, so patch near tiny_tris.
 mk = makefile.read_text()
 inc_anchor = '  $(PROJ_DIR)/app/game/port/tiny_tris \\\n'
 inc_add = inc_anchor + '  $(PROJ_DIR)/app/game/port/cyber_games \\\n'
 if '$(PROJ_DIR)/app/game/port/cyber_games \\' not in mk:
     if inc_anchor not in mk:
-        # Some revisions use -I form instead; fall back to appending the include flag.
         mk += '\nINC_FOLDERS += $(PROJ_DIR)/app/game/port/cyber_games\n'
     else:
         mk = mk.replace(inc_anchor, inc_add, 1)
 makefile.write_text(mk)
 
-print('Compact tech UI applied')
+verify = list_view.read_text()
+for marker in ('#define LIST_ITEM_HEIGHT 10', 'u8g2_font_likeminecraft_te', 'uint32_t focus_h = 9;'):
+    if marker not in verify:
+        raise SystemExit('compact LCD typography verification failed: ' + marker)
+
+print('Compact linked pixel font applied with six 10px menu rows on the 64px LCD')
 print('Cyber Arcade: Arkanoid / Invaders / Lander / Tris / Cyber Hoops 2K / Cyber Fighter')
