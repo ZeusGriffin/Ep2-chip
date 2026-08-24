@@ -2,7 +2,7 @@ name: Wuzplay v8 all-in-one DFU
 
 on:
   push:
-    branches: [main, wuzplay-cyberdeck-v8-reconstruction, wuzplay-v8-no-amiibo-folder]
+    branches: [main, wuzplay-cyberdeck-v8-reconstruction, wuzplay-v8-no-amiibo-folder, wuzplay-v8-screen-upright-v804]
     paths:
       - 'wuzplay-cyberdeck-v8/firmware/source/**'
       - '.github/workflows/wuzplay-v8-build-all.yml'
@@ -43,7 +43,7 @@ jobs:
           python3 wuzplay-cyberdeck-v8/firmware/source/force_all_apps.py pixljs-source
           python3 wuzplay-cyberdeck-v8/firmware/source/force_screen_rotation.py pixljs-source
 
-      - name: Static feature gate
+      - name: Static feature and navigation gate
         run: |
           set -eu
           test ! -d pixljs-source/fw/application/src/app/amiibo
@@ -73,11 +73,16 @@ jobs:
           grep -q -- '-DAPP_PLAYER_ENABLE' pixljs-source/fw/application/Makefile
           ! grep -q -- '-DAPP_LEGLAMIIBO_ENABLE' pixljs-source/fw/application/Makefile
           grep -q 'return_key_enabled' pixljs-source/fw/application/src/mod/settings.h
+          grep -q 'return_key_pin' pixljs-source/fw/application/src/mod/settings.h
           grep -q 'display_flip' pixljs-source/fw/application/src/mod/settings.h
-          grep -q '(void)flipped; return U8G2_MIRROR_VERTICAL;' pixljs-source/fw/application/src/mui/mui_u8g2.c
+          grep -R -q 'INPUT_KEY_BACK' pixljs-source/fw/application/src
+          grep -R -q 'INPUT_KEY_MAX' pixljs-source/fw/application/src/app/game
+          grep -q '(void)flipped; return U8G2_R0;' pixljs-source/fw/application/src/mui/mui_u8g2.c
+          ! grep -q '(void)flipped; return U8G2_MIRROR_VERTICAL;' pixljs-source/fw/application/src/mui/mui_u8g2.c
+          ! grep -q '(void)flipped; return U8G2_R2;' pixljs-source/fw/application/src/mui/mui_u8g2.c
 
       - name: Build LCD firmware and Nordic DFU
-        run: cd pixljs-source/fw && make all BOARD=LCD RELEASE=1 APP_VERSION=803
+        run: cd pixljs-source/fw && make all BOARD=LCD RELEASE=1 APP_VERSION=804
 
       - name: Verify linked ELF symbols
         run: |
@@ -103,6 +108,8 @@ jobs:
           required = [
               b'NFC Actions', b'NFC Cards', b'Media Player', b'Cyber Arcade', b'Wireless Files',
               b'Arkanoid', b'Invaders', b'Lander', b'Tris', b'Cyber Hoops 2K', b'Cyber Fighter',
+              b'NFC Link', b'NFC Library', b'Chameleon', b'UID', b'ATQA', b'SAK', b'ATS', b'Write Mode',
+              b'Detect Return Button', b'Return Button', b'Flip Screen', b'Backlight', b'Contrast',
               b'scriptable:///run?scriptName=CyberSync&mode=system',
               b'scriptable:///run?scriptName=CyberSync&mode=dashboard',
               b'scriptable:///run?scriptName=CyberSync&mode=network',
@@ -123,14 +130,14 @@ jobs:
               b'shortcuts://run-shortcut?name=Quick%20Note',
               b'shortcuts://run-shortcut?name=10%20Minute%20Timer',
           ]
-          missing = [x.decode() for x in required if x not in b]
+          missing = [x.decode(errors='replace') for x in required if x not in b]
           if missing:
               raise SystemExit('compiled feature verification failed: ' + repr(missing))
           forbidden = [b'Amiibo Database', b'AmiiboLink']
           found = [x.decode() for x in forbidden if x in b]
           if found:
               raise SystemExit('forbidden Amiibo app labels present in binary: ' + repr(found))
-          zpath = Path('pixljs-source/fw/_build/pixjs_ota_v803.zip')
+          zpath = Path('pixljs-source/fw/_build/pixjs_ota_v804.zip')
           with zipfile.ZipFile(zpath) as z:
               names = set(z.namelist())
               if not {'manifest.json','pixljs.bin','pixljs.dat'} <= names:
@@ -142,15 +149,15 @@ jobs:
 
       - name: Prepare installable DFU
         run: |
-          cp pixljs-source/fw/_build/pixjs_ota_v803.zip 01_INSTALL_WUZPLAY_V8_ALL_IN_ONE_ROT2_REFLECT_DFU_KEEP_ZIPPED.zip
-          sha256sum 01_INSTALL_WUZPLAY_V8_ALL_IN_ONE_ROT2_REFLECT_DFU_KEEP_ZIPPED.zip > WUZPLAY_V8_ALL_IN_ONE_ROT2_REFLECT_SHA256.txt
+          cp pixljs-source/fw/_build/pixjs_ota_v804.zip 01_INSTALL_WUZPLAY_V8_ALL_IN_ONE_SCREEN_CORRECTED_DFU_KEEP_ZIPPED.zip
+          sha256sum 01_INSTALL_WUZPLAY_V8_ALL_IN_ONE_SCREEN_CORRECTED_DFU_KEEP_ZIPPED.zip > WUZPLAY_V8_ALL_IN_ONE_SCREEN_CORRECTED_SHA256.txt
 
       - uses: actions/upload-artifact@v4
         with:
-          name: WUZPLAY_V8_ALL_IN_ONE_ROT2_REFLECT_DFU
+          name: WUZPLAY_V8_ALL_IN_ONE_SCREEN_CORRECTED_DFU
           if-no-files-found: error
           path: |
-            01_INSTALL_WUZPLAY_V8_ALL_IN_ONE_ROT2_REFLECT_DFU_KEEP_ZIPPED.zip
-            WUZPLAY_V8_ALL_IN_ONE_ROT2_REFLECT_SHA256.txt
+            01_INSTALL_WUZPLAY_V8_ALL_IN_ONE_SCREEN_CORRECTED_DFU_KEEP_ZIPPED.zip
+            WUZPLAY_V8_ALL_IN_ONE_SCREEN_CORRECTED_SHA256.txt
             pixljs-source/fw/_build/pixljs.bin
             pixljs-source/fw/_build/pixljs_all.hex
