@@ -16,34 +16,37 @@ text = PATH.read_text()
 if '#include "mui_core.h"' not in text:
     text = text.replace('#include "mui_u8g2.h"', '#include "mui_u8g2.h"\n#include "mui_core.h"', 1)
 
-# Exact semantics of the user's proven Espruino fix:
-#     g.setRotation(2, true)
-# Espruino rotation 2 first sets INVERT_X | INVERT_Y. With reflect=true and no
-# SWAP_XY, it toggles INVERT_X back off, leaving INVERT_Y only. U8g2 exposes
-# that exact final transform as U8G2_MIRROR_VERTICAL.
+# Hardware-photo correction (v804):
+# v803 forced U8G2_MIRROR_VERTICAL and the physical LCD photo proved that this
+# flips the entire rendered UI top-to-bottom. Remove that transform and use the
+# LCD's native U8G2_R0 orientation instead. This fixes only display coordinates;
+# all apps/features remain unchanged.
 #
-# Force the callback regardless of persisted display_flip state. The settings
-# screen can call mui_u8g2_set_display_flip(), but this helper intentionally
-# returns the same proven transform every time so old settings cannot undo it.
+# Keep the result independent of persisted display_flip state so an old setting
+# cannot reintroduce the bad orientation at boot or from the Settings callback.
 old_normal = "static const u8g2_cb_t *mui_u8g2_get_rotation_cb(bool flipped) { return flipped ? U8G2_R2 : U8G2_R0; }"
 old_rot2 = "static const u8g2_cb_t *mui_u8g2_get_rotation_cb(bool flipped) { (void)flipped; return U8G2_R2; }"
-new = "static const u8g2_cb_t *mui_u8g2_get_rotation_cb(bool flipped) { (void)flipped; return U8G2_MIRROR_VERTICAL; }"
+old_mirror_vertical = "static const u8g2_cb_t *mui_u8g2_get_rotation_cb(bool flipped) { (void)flipped; return U8G2_MIRROR_VERTICAL; }"
+new = "static const u8g2_cb_t *mui_u8g2_get_rotation_cb(bool flipped) { (void)flipped; return U8G2_R0; }"
 
-if old_normal in text:
-    text = text.replace(old_normal, new)
-elif old_rot2 in text:
-    text = text.replace(old_rot2, new)
-elif new not in text:
-    raise SystemExit("expected display rotation helper not found")
+for old in (old_normal, old_rot2, old_mirror_vertical):
+    if old in text:
+        text = text.replace(old, new)
+        break
+else:
+    if new not in text:
+        raise SystemExit("expected display rotation helper not found")
 
 PATH.write_text(text)
 
 verify = PATH.read_text()
 if '#include "mui_core.h"' not in verify:
     raise SystemExit("mui_core.h dependency was not added")
-if "(void)flipped; return U8G2_MIRROR_VERTICAL;" not in verify:
-    raise SystemExit("rotation 2 + reflect transform was not applied")
+if "(void)flipped; return U8G2_R0;" not in verify:
+    raise SystemExit("native upright U8G2_R0 orientation was not applied")
+if "return U8G2_MIRROR_VERTICAL;" in verify:
+    raise SystemExit("old vertical mirror transform is still present")
 
-print("Wuzplay orientation forced to Espruino g.setRotation(2, true) semantics")
-print("Final transform: U8G2_MIRROR_VERTICAL / INVERT_Y")
+print("Wuzplay v804 LCD orientation forced to native upright U8G2_R0")
+print("Removed the v803 top-to-bottom mirror proven wrong by hardware photo")
 print("MUI rotation dependencies made explicit")
