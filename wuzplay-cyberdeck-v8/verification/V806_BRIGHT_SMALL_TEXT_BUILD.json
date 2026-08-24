@@ -1,0 +1,39 @@
+{
+  "project": "Wuzplay v8",
+  "application_version": 806,
+  "board": "LCD",
+  "dfu_filename": "WUZPLAY_V806_SCREEN_FIXED_BRIGHT_BACKLIGHT_SMALL_TEXT_ALL_IN_ONE_DFU_DO_NOT_UNZIP.zip",
+  "dfu_sha256": "ceb785101a7e9558fcb605ab3fc6675d7ec50348b3077bde892aecf4c7bfd2af",
+  "pixljs_bin_size": 267980,
+  "pixljs_bin_sha256": "58c1eea24887ab3cf626c36384a11a87a351b2d047e34599e9930e64780433dd",
+  "github_actions_run": 32774726871,
+  "github_actions_artifact_id": 9537552362,
+  "github_actions_artifact_digest": "sha256:5d6f6d3a8d0b330ab2b55af89925788c23fd884872c867dbc7f9a974583ed15a",
+  "source_head": "4af18fa1da34591e44aa454691bd4dbde688868a",
+  "merge_commit": "ca8fe51b04b50e8c65ea494dc63e4206f7ceb8c3",
+  "screen_orientation": "U8G2_R0 native upright",
+  "lcd_backlight": {
+    "fresh_or_reset_default_percent": 100,
+    "persisted_zero_or_invalid_migrates_to_percent": 100,
+    "adjustable_range_percent": [10, 100],
+    "cancel_restores_original": true
+  },
+  "menu_ui": {
+    "font": "u8g2_font_likeminecraft_te",
+    "list_item_height_px": 10,
+    "focus_height_px": 9,
+    "target_complete_rows_on_64px_lcd": 6
+  },
+  "verified_features": {
+    "games": ["Arkanoid", "Invaders", "Lander", "Tris", "Cyber Hoops 2K", "Cyber Fighter"],
+    "nfc_actions_count": 19,
+    "govee_actions": ["Govee On", "Govee Off", "Govee Bright", "Govee Relax", "Govee Movie", "Govee Red", "Govee Blue"],
+    "nfc_cards_chameleon": true,
+    "media_player": true,
+    "wireless_files_ble": true,
+    "return_back_support": true
+  },
+  "dfu_members": ["pixljs.bin", "pixljs.dat", "manifest.json"],
+  "dfu_crc_test": "PASS",
+  "hardware_note": "Build, link, binary features, and DFU integrity verified. Physical-device confirmation remains required for final brightness/readability behavior."
+}
