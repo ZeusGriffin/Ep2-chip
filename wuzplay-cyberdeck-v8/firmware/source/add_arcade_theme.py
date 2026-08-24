@@ -7,14 +7,14 @@ SRC = ROOT / 'fw/application/src'
 if not SRC.exists():
     raise SystemExit(f'pixl.js source tree not found: {SRC}')
 
-# Compact LCD typography. The 5x7 font is materially smaller than the original
-# 12px font and leaves more horizontal room for long app/action names. Ten-pixel
-# rows fit six complete menu rows on the 64px LCD while retaining the 6x10 icon
-# glyphs and a visible focus bar.
+# Compact LCD typography. Use the already-linked small pixel font so the menu
+# stays build-safe while remaining much smaller than the original 12px UI.
+# Ten-pixel rows fit six complete rows on the 64px LCD. The existing clip/scroll
+# behavior remains available for unusually long labels.
 list_view = SRC / 'mui/view/mui_list_view.c'
 text = list_view.read_text()
 text = text.replace('#define LIST_ITEM_HEIGHT 13', '#define LIST_ITEM_HEIGHT 10')
-text = text.replace('u8g2_font_wqy12_t_gb2312a', 'u8g2_font_5x7_tr')
+text = text.replace('u8g2_font_wqy12_t_gb2312a', 'u8g2_font_likeminecraft_te')
 text = text.replace('actual_y + 10, item->icon', 'actual_y + 8, item->icon')
 text = text.replace('actual_y + 10, string_get_cstr(item->text)', 'actual_y + 8, string_get_cstr(item->text)')
 text = text.replace('actual_y + 10,\n                                              string_get_cstr(item->sub_text)', 'actual_y + 8,\n                                              string_get_cstr(item->sub_text)')
@@ -221,11 +221,10 @@ if '$(PROJ_DIR)/app/game/port/cyber_games \\' not in mk:
         mk = mk.replace(inc_anchor, inc_add, 1)
 makefile.write_text(mk)
 
-# Fail the patch immediately if the LCD-fit typography was not installed.
 verify = list_view.read_text()
-for marker in ('#define LIST_ITEM_HEIGHT 10', 'u8g2_font_5x7_tr', 'uint32_t focus_h = 9;'):
+for marker in ('#define LIST_ITEM_HEIGHT 10', 'u8g2_font_likeminecraft_te', 'uint32_t focus_h = 9;'):
     if marker not in verify:
         raise SystemExit('compact LCD typography verification failed: ' + marker)
 
-print('Small 5x7 LCD text applied; six 10px menu rows fit the 64px display')
+print('Compact linked pixel font applied with six 10px menu rows on the 64px LCD')
 print('Cyber Arcade: Arkanoid / Invaders / Lander / Tris / Cyber Hoops 2K / Cyber Fighter')
