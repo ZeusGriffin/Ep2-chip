@@ -1,0 +1,58 @@
+WUZPLAY v8 — v804 SCREEN-CORRECTED ALL-IN-ONE DFU
+
+Purpose
+- Correct the LCD orientation based on the physical hardware photo.
+- v803 U8G2_MIRROR_VERTICAL was proven on hardware to flip the UI top-to-bottom.
+- v804 removes that mirror and forces native U8G2_R0.
+- No feature removals were made.
+
+Installable DFU
+01_INSTALL_WUZPLAY_V8_ALL_IN_ONE_SCREEN_CORRECTED_DFU_KEEP_ZIPPED.zip
+Size: 268591 bytes
+SHA-256: 5c297dc013f976842e98c2bc0ebe9e97c94d9eef41f5ac17f9c58cd454636a02
+
+DFU members
+- pixljs.bin — 267996 bytes — SHA-256 459cc3ec4f7c67079631826fe016bdc13961b5debe6e15647d30aa6cc56772e0
+- pixljs.dat — 142 bytes — SHA-256 df4c6a699e3fbb38e8cfd64515961c42e685cb0018323d5e7648f1d510c87737
+- manifest.json — 137 bytes — SHA-256 089c4e8e2d2f0958da9e0dd559bf14b1be6f05dd7685efa6a938dc6f5aba97fc
+
+GitHub Actions
+- Workflow: Wuzplay v8 all-in-one DFU
+- Run ID: 32772766324
+- Artifact ID: 9536849400
+- Artifact name: WUZPLAY_V8_ALL_IN_ONE_SCREEN_CORRECTED_DFU
+- Artifact digest: sha256:1dc57f311767a5af7b75fba74ed288889c422d019af1dd8616ea02e6ad8e985a
+- Source head: 2f46deb88c37bb9b942ca0d2e36e3a440bb8afba
+- PR: #4
+- Merge commit: 9fed76ec404c4496ada8a87da4be2a01488b8886
+
+Verification passed
+- Exact custom source snapshot fetched and pinned
+- All Wuzplay v8 patches applied
+- Native U8G2_R0 screen transform verified in generated source
+- Old forced U8G2_MIRROR_VERTICAL and forced U8G2_R2 transforms absent
+- NFC Actions app linked
+- NFC Cards / Chameleon app linked
+- Media Player linked
+- Cyber Arcade linked
+- Wireless Files / BLE linked
+- Arkanoid linked
+- Invaders linked
+- Lander linked
+- Tris linked
+- Cyber Hoops 2K linked
+- Cyber Fighter linked
+- All 19 built-in NFC action URIs present in compiled binary
+- Detect Return Button / Return Button / Flip Screen settings present
+- Back/Return input source support present
+- UID / ATQA / SAK / ATS / Write Mode / Chameleon markers present
+- Backlight / Contrast settings present
+- Legacy Amiibo app symbols absent
+- Legacy Amiibo Database / AmiiboLink compiled labels absent
+- Nordic DFU contains manifest.json, pixljs.bin, pixljs.dat
+- ZIP CRC test passed
+- Independent local artifact verification passed
+
+Hardware status
+- v803 top-to-bottom mirror failure was confirmed by physical photo.
+- v804 orientation is corrected from that hardware evidence but still requires a final physical flash confirmation on the device.
