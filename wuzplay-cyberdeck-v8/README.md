@@ -2,6 +2,10 @@
 
 This reconstruction uses the known-good Wuzplay v8 DFU as the gold anchor and rebuilds the companion side from source. The complete packaged ZIP includes the gold DFU; the GitHub connector branch keeps the source, hashes, and importer visible because direct large-binary transport through the connector was not byte-safe.
 
+## Project history / source of truth
+
+See `docs/PROJECT_HISTORY.md` for the consolidated WurzHack project decisions, firmware lineage, v802/v803 all-in-one history, custom feature inventory, hashes, verification status, and the boundary between repository history and non-exported ChatGPT conversation transcripts.
+
 ## Working firmware anchor
 
 Flash **only**:
@@ -43,4 +47,4 @@ python3 tools/make_nfc_pack.py --out nfc_pack --check
 python3 tools/verify_release.py --root . --write-report
 ```
 
-See `docs/INSTALL.md`, `docs/CAPABILITIES.md`, and `firmware/source/README.md`.
+See `docs/INSTALL.md`, `docs/CAPABILITIES.md`, `docs/PROJECT_HISTORY.md`, and `firmware/source/README.md`.
