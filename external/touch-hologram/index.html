@@ -1,0 +1,155 @@
+<!--
+Upstream: https://github.com/y2xs/Hologram
+License: MIT
+Copyright (c) 2026 y2xs
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Hologram</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: #000; cursor: none; }
+        #output_canvas { width: 100vw; height: 100vh; display: block; }
+        #webcam { display: none; }
+    </style>
+</head>
+<body>
+    <video id="webcam" autoplay playsinline></video>
+    <canvas id="output_canvas"></canvas>
+
+    <script type="importmap">
+        { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js" } }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { HandLandmarker, FilesetResolver } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.0";
+
+        const video = document.getElementById('webcam');
+        const canvas = document.getElementById('output_canvas');
+
+        const createHoloTexture = () => {
+            const c = document.createElement('canvas');
+            c.width = 64; c.height = 64;
+            const ctx = c.getContext('2d');
+            const g = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+            g.addColorStop(0, 'rgba(255,255,255,1)');
+            g.addColorStop(0.3, 'rgba(255,255,255,0.5)');
+            g.addColorStop(1, 'rgba(255,255,255,0)');
+            ctx.fillStyle = g; ctx.fillRect(0,0,64,64);
+            return new THREE.CanvasTexture(c);
+        };
+
+        const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 2000);
+        camera.position.z = 150;
+
+        const count = 50000;
+        const geo = new THREE.BufferGeometry();
+        const pos = new Float32Array(count * 3);
+        const col = new Float32Array(count * 3);
+        const targetPos = new Float32Array(count * 3);
+
+        geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+        geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
+
+        const mat = new THREE.PointsMaterial({
+            size: 0.8, map: createHoloTexture(), vertexColors: true,
+            transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending, depthWrite: false
+        });
+        const points = new THREE.Points(geo, mat);
+        scene.add(points);
+
+        let handLandmarker;
+        let targetRotX = 0, targetRotY = 0, zoomAmt = 150;
+
+        // Initialize Geometry - 50/50 split between Ball and Rings
+        for (let i = 0; i < count; i++) {
+            const idx = i * 3;
+            let tx, ty, tz;
+
+            if (i > count * 0.5) { // Rings (Flat Disk)
+                const rad = 50 + (Math.random() * 25);
+                const ang = Math.random() * Math.PI * 2;
+                tx = Math.cos(ang) * rad; 
+                ty = (Math.random() - 0.5) * 1.5; 
+                tz = Math.sin(ang) * rad;
+            } else { // Planet (True Sphere)
+                const phi = Math.acos(-1 + (2 * i) / (count * 0.5));
+                const theta = Math.sqrt(count * 0.5 * Math.PI) * phi;
+                tx = 32 * Math.cos(theta) * Math.sin(phi);
+                ty = 32 * Math.sin(theta) * Math.sin(phi);
+                tz = 32 * Math.cos(phi);
+            }
+            targetPos[idx] = tx; targetPos[idx+1] = ty; targetPos[idx+2] = tz;
+            pos[idx] = tx; pos[idx+1] = ty; pos[idx+2] = tz;
+        }
+
+        async function init() {
+            const vision = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.0/wasm");
+            handLandmarker = await HandLandmarker.createFromOptions(vision, {
+                baseOptions: { modelAssetPath: "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task", delegate: "GPU" },
+                runningMode: "VIDEO", numHands: 1
+            });
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            video.srcObject = stream;
+            video.onloadedmetadata = () => animate();
+        }
+        init();
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            if (handLandmarker && video.readyState >= 2) {
+                const results = handLandmarker.detectForVideo(video, performance.now());
+                if (results.landmarks && results.landmarks[0]) {
+                    const l = results.landmarks[0];
+                    targetRotY = (0.5 - l[9].x) * 4;
+                    targetRotX = (l[9].y - 0.5) * 3;
+                    const d = Math.hypot(l[4].x - l[8].x, l[4].y - l[8].y);
+                    zoomAmt = THREE.MathUtils.lerp(350, 15, d * 3.2);
+                }
+            }
+
+            const pArr = geo.attributes.position.array;
+            const cArr = geo.attributes.color.array;
+            const blue = new THREE.Color(0x0044ff);
+            const green = new THREE.Color(0x00ffaa);
+
+            // Warp factor increases as camera gets closer to the planet
+            const warpFactor = THREE.MathUtils.clamp((150 - zoomAmt) / 135, 0, 1);
+
+            for (let i = 0; i < count; i++) {
+                const idx = i * 3;
+                
+                // Expanding the coordinates outward based on warpFactor
+                const expansion = 1 + (warpFactor * warpFactor * 8); 
+                const driftX = targetPos[idx] * expansion;
+                const driftY = targetPos[idx+1] * expansion;
+                const driftZ = targetPos[idx+2];
+
+                pArr[idx] += (driftX - pArr[idx]) * 0.1;
+                pArr[idx+1] += (driftY - pArr[idx+1]) * 0.1;
+                pArr[idx+2] += (driftZ - pArr[idx+2]) * 0.1;
+
+                // Color based on vertical position of the original sphere
+                const mix = THREE.MathUtils.clamp((targetPos[idx+1] + 32) / 64, 0, 1);
+                const final = blue.clone().lerp(green, mix);
+                cArr[idx] = final.r; cArr[idx+1] = final.g; cArr[idx+2] = final.b;
+            }
+
+            geo.attributes.position.needsUpdate = true;
+            geo.attributes.color.needsUpdate = true;
+            
+            points.rotation.y += (targetRotY - points.rotation.y) * 0.05;
+            points.rotation.x += (targetRotX - points.rotation.x) * 0.05;
+            camera.position.z += (zoomAmt - camera.position.z) * 0.1;
+            
+            renderer.render(scene, camera);
+        }
+    </script>
+</body>
+</html>
