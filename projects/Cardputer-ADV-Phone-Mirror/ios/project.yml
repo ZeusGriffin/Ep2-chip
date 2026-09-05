@@ -1,0 +1,46 @@
+name: CardputerMirror
+options:
+  bundleIdPrefix: com.madebyzeus
+settings:
+  base:
+    IPHONEOS_DEPLOYMENT_TARGET: "17.0"
+    SWIFT_VERSION: "5.0"
+
+targets:
+  CardputerMirror:
+    type: application
+    platform: iOS
+    sources:
+      - path: CardputerMirrorApp
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.madebyzeus.CardputerMirror
+        TARGETED_DEVICE_FAMILY: "1"
+    info:
+      path: CardputerMirrorApp/Info.plist
+      properties:
+        CFBundleDisplayName: Cardputer Mirror
+        UILaunchScreen: {}
+        NSLocalNetworkUsageDescription: "Cardputer Mirror sends your screen frames directly to your Cardputer on the local Wi-Fi network."
+    dependencies:
+      - target: CardputerBroadcast
+        embed: true
+
+  CardputerBroadcast:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: CardputerBroadcast
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.madebyzeus.CardputerMirror.BroadcastExtension
+        APPLICATION_EXTENSION_API_ONLY: YES
+        TARGETED_DEVICE_FAMILY: "1"
+    info:
+      path: CardputerBroadcast/Info.plist
+      properties:
+        CFBundleDisplayName: Cardputer Mirror Broadcast
+        NSLocalNetworkUsageDescription: "The broadcast extension sends reduced JPEG frames to your Cardputer over your local network."
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.broadcast-services-upload
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).SampleHandler

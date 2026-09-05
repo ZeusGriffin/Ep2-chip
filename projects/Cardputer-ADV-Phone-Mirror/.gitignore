@@ -1,0 +1,7 @@
+.pio/
+.vscode/
+.DS_Store
+ios/*.xcodeproj/
+ios/DerivedData/
+*.xcuserstate
+__pycache__/
