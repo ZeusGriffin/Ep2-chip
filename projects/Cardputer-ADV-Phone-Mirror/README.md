@@ -16,12 +16,40 @@ That architecture is intentionally chosen because the Cardputer ADV has an ESP32
 - `ios/` — iPhone app + ReplayKit Broadcast Upload Extension, generated with XcodeGen
 - `tools/pc_sender.py` — desktop sender used to prove the Cardputer video receiver before involving iOS
 - `docs/PROTOCOL.md` — tiny TCP/JPEG framing protocol
+- `FLASH_CARDPUTER_WINDOWS.bat` — one-click Windows build + flash launcher
+- `windows/` — PowerShell flasher and troubleshooting instructions
+
+## Fastest Windows flashing method
+
+On Windows, you do not need to open VS Code or PlatformIO manually.
+
+1. Download/clone this project folder to the Windows PC.
+2. Set the Cardputer ADV side power switch to **OFF**.
+3. Hold **G0**.
+4. While holding G0, connect the Cardputer ADV with a **USB-C data cable**.
+5. Release G0 after the USB cable is connected.
+6. Double-click `FLASH_CARDPUTER_WINDOWS.bat`.
+7. Follow the large on-screen instructions.
+
+The flasher finds Python, installs PlatformIO if needed, builds the current firmware source, shows serial devices, and uploads the firmware. If multiple serial devices are attached, you can specify a port such as:
+
+```bat
+FLASH_CARDPUTER_WINDOWS.bat -Port COM5
+```
+
+See `windows/README.md` for troubleshooting.
 
 ## Milestone 1A — prove the Cardputer receiver
 
+### One-click Windows route
+
+Use `FLASH_CARDPUTER_WINDOWS.bat` as described above.
+
+### Manual PlatformIO route
+
 1. Install PlatformIO in VS Code.
 2. Open the `firmware` folder.
-3. Connect the Cardputer ADV over USB-C.
+3. Connect the Cardputer ADV over USB-C in download mode.
 4. Build and upload.
 5. Cardputer should show:
    - Wi-Fi: `CardputerMirror`
