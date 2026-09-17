@@ -4,9 +4,24 @@ Status: hardware identification required before firmware flash
 Updated: 2026-09-17
 
 ## Goal
-Turn the existing ESP32 display/miner into one small multi-mode device rather than replacing one firmware with another.
+Turn the existing ESP32 display/miner into one simple multi-mode device.
 
-Boot -> BLINK launcher -> AI Face / Desktop / Miner / Scribe / Games / Aquarium / Home / Audio / Settings
+Boot -> BLINK launcher -> AI Face / Desktop / Wi-Fi Radar / Miner / Scribe / Games / Aquarium / Settings
+
+## Keep V1 easy
+First firmware target should only include the pieces needed to prove the device works:
+
+1. BLINK launcher
+2. AI Face
+3. Wi-Fi Radar
+4. Desktop/status page
+5. Scribe companion page
+6. Aquarium screensaver
+7. Games launcher with simple board-safe games
+8. Miner page if compatible
+9. Settings + OTA/DFU recovery
+
+Home controls, audio/radio, advanced phone mirroring, and heavier emulation can come later.
 
 ## AI Face target
 Reference builds:
@@ -26,7 +41,7 @@ Features to preserve/adapt:
 - speaking expression
 - audio-reactive mouth animation
 - wake word / push-to-talk option
-- I2S microphone input
+- I2S microphone input when hardware permits
 - I2S amplifier + speaker output when hardware permits
 - OTA/DFU update path
 - configurable assistant name / voice / language / role
@@ -34,9 +49,23 @@ Features to preserve/adapt:
 
 Important: do not flash the reference binary directly until the actual board, display controller, flash size, PSRAM, GPIO map, microphone, speaker/amp, and USB/DFU method are confirmed.
 
-## Scribe mode
-Two implementation levels:
+## Wi-Fi Radar
+Simple visual network scanner using the ESP32 Wi-Fi radio.
 
+V1 behavior:
+- tap Wi-Fi Radar
+- scan nearby Wi-Fi access points
+- show SSID
+- show signal strength (RSSI)
+- show channel
+- show open/secured status
+- sort strongest first
+- optional radar-style circles for signal strength
+- rescan button
+
+Keep this passive: scan and display only. No deauthentication, password attacks, interception, or packet injection.
+
+## Scribe mode
 ### Preferred: Scribe companion view
 Scribe sends only what the little screen needs over Wi-Fi/BLE:
 - live waveform / listening indicator
@@ -48,8 +77,8 @@ Scribe sends only what the little screen needs over Wi-Fi/BLE:
 
 This will be faster and smoother than sending the whole iPhone display.
 
-### Optional: phone screen mirror
-A companion iPhone app can capture selected screen content with Apple's screen-capture APIs, resize/compress frames, and stream low-resolution frames over Wi-Fi to the ESP32. Expect lower frame rate and more latency than the native Scribe companion view.
+### Optional later: phone screen mirror
+A companion iPhone app can capture selected screen content, resize/compress frames, and stream low-resolution frames over Wi-Fi to the ESP32. Expect lower frame rate and more latency than the native Scribe companion view.
 
 ## Desktop mode
 - clock/date
@@ -73,7 +102,7 @@ Reference:
 https://github.com/BitMaker-hub/NerdMiner_v2
 
 ## Aquarium mode
-Reference implementations:
+References:
 - https://github.com/Lagerpun/esp32-cyd-aquarium
 - https://github.com/POWER-PILL/ASCII-Aquarium
 
@@ -85,23 +114,14 @@ Target:
 - screensaver behavior after idle timeout
 
 ## Games mode
-Build as a launcher with board-appropriate games only after hardware identification.
-Potential categories:
+Board-safe first set:
 - Snake
 - Pong
 - Breakout
 - Tetris-style block game
-- simple platformer
 - simple spider/web-swing inspired mini-game
-- lightweight retro emulation only if flash/PSRAM/input hardware supports it
 
-Do not promise GBA/N64-class emulation on an unknown ESP32 board.
-
-## Home / Audio
-- Home Assistant / Govee status and commands through a network bridge
-- internet radio when audio hardware exists
-- notification sounds
-- audio visualizer
+Lightweight retro emulation only if flash/PSRAM/input hardware supports it.
 
 ## Firmware architecture
 1. Hardware abstraction layer
@@ -112,12 +132,12 @@ Do not promise GBA/N64-class emulation on an unknown ESP32 board.
    - storage
 2. App manager / launcher
 3. AI face state machine
-4. Scribe companion protocol
-5. Desktop telemetry client
-6. Miner app
-7. Aquarium app
-8. Game launcher
-9. Home/audio modules
+4. Wi-Fi Radar scanner
+5. Scribe companion protocol
+6. Desktop telemetry client
+7. Miner app
+8. Aquarium app
+9. Game launcher
 10. Settings + OTA/DFU recovery
 
 ## AI state machine
@@ -140,9 +160,10 @@ Before writing firmware:
 5. document boot/DFU buttons and recovery sequence
 6. compile a minimal display test
 7. test launcher
-8. add AI face
-9. add audio only after GPIO/voltage verification
-10. add Scribe/Desktop/Aquarium/Games incrementally
+8. test Wi-Fi Radar
+9. add AI face
+10. add audio only after GPIO/voltage verification
+11. add Scribe/Desktop/Aquarium/Games incrementally
 
 Never wire or flash using a guessed pin map.
 
