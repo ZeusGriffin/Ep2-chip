@@ -1,7 +1,7 @@
 # BLINK Pocket Desktop / AI Face
 
-Status: hardware identification required before firmware flash
-Updated: 2026-09-17
+Status: hardware identified (NM-TV-154, ESP32-D0WD-V3, ST7789 240x240) — see hardware/NM-TV-154/pinmap.md. Firmware backed up. Next: minimal display test.
+Updated: 2026-09-18
 
 ## Goal
 Turn the existing ESP32 display/miner into one small modular multi-mode device rather than replacing one firmware with another.
