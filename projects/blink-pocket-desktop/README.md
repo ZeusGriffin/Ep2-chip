@@ -1,7 +1,7 @@
 # BLINK Pocket Desktop / AI Face
 
-Status: hardware identified (NM-TV-154, ESP32-D0WD-V3, ST7789 240x240) — see hardware/NM-TV-154/pinmap.md. Firmware backed up. Next: minimal display test.
-Updated: 2026-09-18
+Status: hardware identified (NM-TV-154, ESP32-D0WD-V3, ST7789 240x240) — see hardware/NM-TV-154/pinmap.md. Firmware backed up. Display, gestures, wired/BLE input, WiFi OTA, page nav, and vector-font styling are BUILT + COMPILE-VERIFIED but NOT YET flashed to the physical board (device wasn't connected to do so). See archive/2026-09-24-handoff.md for the exact state and the blocked/unverified list.
+Updated: 2026-09-24
 
 ## Goal
 Turn the existing ESP32 display/miner into one small modular multi-mode device rather than replacing one firmware with another.

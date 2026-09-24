@@ -202,6 +202,8 @@ void startBleKeyboardScan() {
 // ---------------------------------------------------------------------------
 #include <WiFi.h>
 #include <ArduinoOTA.h>
+#include <time.h>
+#include "secrets.h" // WIFI_STA_SSID / WIFI_STA_PASS -- gitignored, see include/secrets.h
 
 static const char *OTA_AP_SSID = "BLINK-OTA";
 static const char *OTA_AP_PASS = "blinkflash";
@@ -240,14 +242,166 @@ void startOtaMode() {
 }
 
 // ---------------------------------------------------------------------------
+// Header clock/date widget -- small mono text, top-right corner of the fixed
+// header strip. Fades to black, swaps content, fades back in: shows the time
+// most of the time, briefly shows the date every ~8s. NEVER draws a fake or
+// guessed time -- stays hidden entirely until a real NTP sync succeeds.
+//
+// Font: FreeMono9pt7b, same as the rest of the metadata text in this file.
+// This is a stand-in for "NAPOSTMONO" -- that name doesn't match any font
+// bundled with TFT_eSPI/GFXFF and no font file was provided. Swap FONT_META
+// (top of file) for a converted NAPOSTMONO .h once you hand me the real font
+// file (TFT_eSPI's fontconvert tool turns a TTF into a compatible header).
+//
+// Time source: one-shot background Wi-Fi+NTP sync (startClockSync() /
+// pollClockSync()), using include/secrets.h for credentials. Non-blocking --
+// the launcher is interactive immediately; the clock just appears later once
+// synced. Timezone hardcoded to US Central (America/Chicago, matches San
+// Antonio, TX) via POSIX TZ string, which auto-handles the DST switch twice
+// a year -- flag if that's wrong or you're traveling.
+// ---------------------------------------------------------------------------
+static const char *CLOCK_TZ = "CST6CDT,M3.2.0,M11.1.0"; // US Central w/ auto DST
+
+enum class ClockSyncState : uint8_t { Idle, Connecting, WaitingForTime, Synced, Failed };
+static ClockSyncState clockSyncState = ClockSyncState::Idle;
+static uint32_t clockSyncStartMs = 0;
+static bool timeSynced = false;
+static const uint32_t WIFI_CONNECT_TIMEOUT_MS = 8000;
+static const uint32_t NTP_WAIT_TIMEOUT_MS = 5000;
+
+void startClockSync() {
+  if (strlen(WIFI_STA_SSID) == 0) {
+    Serial.println("[clock] no Wi-Fi creds in include/secrets.h -- clock widget stays hidden");
+    clockSyncState = ClockSyncState::Failed;
+    return;
+  }
+  Serial.printf("[clock] connecting to '%s' for NTP (background, non-blocking)...\n", WIFI_STA_SSID);
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(WIFI_STA_SSID, WIFI_STA_PASS);
+  clockSyncStartMs = millis();
+  clockSyncState = ClockSyncState::Connecting;
+}
+
+void pollClockSync(uint32_t now) {
+  if (clockSyncState == ClockSyncState::Connecting) {
+    if (WiFi.status() == WL_CONNECTED) {
+      configTzTime(CLOCK_TZ, "pool.ntp.org", "time.nist.gov");
+      clockSyncStartMs = now;
+      clockSyncState = ClockSyncState::WaitingForTime;
+      Serial.println("[clock] Wi-Fi connected, waiting for NTP...");
+    } else if (now - clockSyncStartMs >= WIFI_CONNECT_TIMEOUT_MS) {
+      Serial.println("[clock] Wi-Fi connect timed out -- clock widget stays hidden");
+      WiFi.disconnect(true);
+      WiFi.mode(WIFI_OFF);
+      clockSyncState = ClockSyncState::Failed;
+    }
+  } else if (clockSyncState == ClockSyncState::WaitingForTime) {
+    struct tm ti;
+    if (getLocalTime(&ti, 0)) { // 0ms = single non-blocking poll, not a wait loop
+      timeSynced = true;
+      clockSyncState = ClockSyncState::Synced;
+      WiFi.disconnect(true);
+      WiFi.mode(WIFI_OFF); // free the radio; startOtaMode() sets its own mode when needed
+      Serial.println("[clock] NTP synced");
+    } else if (now - clockSyncStartMs >= NTP_WAIT_TIMEOUT_MS) {
+      Serial.println("[clock] NTP timed out -- clock widget stays hidden");
+      WiFi.disconnect(true);
+      WiFi.mode(WIFI_OFF);
+      clockSyncState = ClockSyncState::Failed;
+    }
+  }
+}
+
+enum class ClockContent : uint8_t { Time, Date };
+static ClockContent clockContent = ClockContent::Time;
+static uint32_t clockPhaseStartMs = 0;
+static bool clockFadingIn = true;
+static bool clockFadingOut = false;
+static uint8_t clockLastBrightness = 255;
+static char clockLastText[16] = "";
+
+static const uint32_t CLOCK_SHOW_TIME_MS = 8000;
+static const uint32_t CLOCK_SHOW_DATE_MS = 3000;
+static const uint32_t CLOCK_FADE_MS = 500;
+static const int16_t CLOCK_ZONE_W = 76; // clears from (width-CLOCK_ZONE_W) to width, inside the 30px header
+
+uint16_t grayColor565(uint8_t brightness) {
+  return ((brightness >> 3) << 11) | ((brightness >> 2) << 5) | (brightness >> 3);
+}
+
+void updateClockWidget(uint32_t now) {
+  if (!timeSynced) return; // never render a fake/guessed time
+
+  uint32_t elapsed = now - clockPhaseStartMs;
+  uint8_t brightness = 255;
+
+  if (clockFadingIn) {
+    if (elapsed >= CLOCK_FADE_MS) {
+      clockFadingIn = false;
+      clockPhaseStartMs = now;
+      brightness = 255;
+    } else {
+      brightness = (uint8_t)((elapsed * 255) / CLOCK_FADE_MS);
+    }
+  } else if (clockFadingOut) {
+    if (elapsed >= CLOCK_FADE_MS) {
+      clockFadingOut = false;
+      clockContent = (clockContent == ClockContent::Time) ? ClockContent::Date : ClockContent::Time;
+      clockFadingIn = true;
+      clockPhaseStartMs = now;
+      brightness = 0;
+    } else {
+      brightness = 255 - (uint8_t)((elapsed * 255) / CLOCK_FADE_MS);
+    }
+  } else {
+    uint32_t dwell = (clockContent == ClockContent::Time) ? CLOCK_SHOW_TIME_MS : CLOCK_SHOW_DATE_MS;
+    if (elapsed >= dwell) {
+      clockFadingOut = true;
+      clockPhaseStartMs = now;
+    }
+    brightness = 255;
+  }
+
+  time_t nowT;
+  time(&nowT);
+  struct tm ti;
+  localtime_r(&nowT, &ti);
+  char buf[16];
+  if (clockContent == ClockContent::Time) {
+    strftime(buf, sizeof(buf), "%H:%M", &ti);
+  } else {
+    strftime(buf, sizeof(buf), "%m/%d", &ti);
+  }
+
+  if (brightness == clockLastBrightness && strcmp(buf, clockLastText) == 0) return; // nothing changed, skip the SPI write
+  clockLastBrightness = brightness;
+  strncpy(clockLastText, buf, sizeof(clockLastText));
+
+  tft.fillRect(tft.width() - CLOCK_ZONE_W, 0, CLOCK_ZONE_W, 30, TFT_BLACK);
+  tft.setTextDatum(TR_DATUM);
+  tft.setFreeFont(FONT_META);
+  tft.setTextColor(grayColor565(brightness), TFT_BLACK);
+  tft.drawString(buf, tft.width() - 6, 9);
+  tft.setTextFont(1);
+  tft.setTextDatum(MC_DATUM); // restore the datum every other draw call in this file assumes
+}
+
+// ---------------------------------------------------------------------------
 // Minimal page navigation -- proves FORWARD/BACK/RESET actually change what's
 // on screen, not just print a label. Placeholder page names only; real app
 // content (AI Face, Wi-Fi Radar, Miner, etc.) is a later milestone.
 // ---------------------------------------------------------------------------
-static const char *PAGE_NAMES[] = {"HOME", "WIFI", "MINER", "SETTINGS", "ABOUT"};
+static const char *PAGE_NAMES[] = {"HOME", "WIFI", "MINER", "SETTINGS", "ABOUT", "FACE"};
 static const uint8_t PAGE_COUNT = sizeof(PAGE_NAMES) / sizeof(PAGE_NAMES[0]);
+#define FACE_PAGE_INDEX 5 // appended after the 5 existing approved pages -- their indices/order are untouched
 static uint8_t currentPage = 0;
 static bool pageOpened = false; // SELECT opens/closes the current page; FORWARD/BACK/RESET close it
+static bool faceLive = false;   // true only when pageOpened && currentPage == FACE_PAGE_INDEX
+
+// `face` must exist before drawPage() below (it calls face.reset() when the
+// FACE page opens); drawFace() itself is defined later, only called from loop().
+#include <FaceMotion.h>
+static FaceMotion face;
 
 void drawPage(uint8_t page) {
   const int16_t top = 31, bottom = tft.height() - 60;
@@ -255,7 +409,19 @@ void drawPage(uint8_t page) {
   tft.fillRect(0, top, tft.width(), bottom - top, TFT_BLACK); // leave header rule + gesture strip alone
   tft.setTextColor(TFT_WHITE, TFT_BLACK);
 
-  if (pageOpened) {
+  if (pageOpened && page == FACE_PAGE_INDEX) {
+    // Live AI Face -- chrome drawn once here; drawFace() repaints the face
+    // itself every loop() tick on top of this static frame. 1 tap cycles
+    // through Idle/Listening/Thinking/Speaking for a hands-off demo since
+    // there's no live AI backend driving these states yet.
+    faceLive = true;
+    face.reset(millis());
+    tft.setFreeFont(FONT_META);
+    tft.drawString("1 tap: next state", tft.width() / 2, top + 14);
+    tft.drawString("3 taps: close", tft.width() / 2, bottom - 14);
+    tft.setTextFont(1);
+  } else if (pageOpened) {
+    faceLive = false;
     // Framed "open" state -- a distinct boxed panel, not just the browsing view.
     tft.drawRect(12, top + 10, tft.width() - 24, bottom - top - 20, TFT_WHITE);
     tft.setFreeFont(FONT_DISPLAY);
@@ -265,6 +431,7 @@ void drawPage(uint8_t page) {
     tft.drawString("3 taps: close", tft.width() / 2, bottom - 14);
     tft.setTextFont(1);
   } else {
+    faceLive = false; // covers SELECT closing FACE back to plain browsing
     tft.setFreeFont(FONT_DISPLAY);
     tft.drawString(PAGE_NAMES[page], tft.width() / 2, tft.height() / 2 - 10);
 
@@ -278,6 +445,37 @@ void drawPage(uint8_t page) {
   tft.drawFastHLine(0, bottom, tft.width(), TFT_WHITE); // rule line above gesture strip
 
   Serial.printf("[page] %s (%d/%d) opened=%d\n", PAGE_NAMES[page], page + 1, PAGE_COUNT, pageOpened);
+}
+
+// ---------------------------------------------------------------------------
+// AI Face (BUILD_PLAN Phase 1, item 5) -- wires the already-tested,
+// hardware-neutral FaceMotion state machine (firmware/core/FaceMotion.*, see
+// FaceMotion_TESTED.md) into an actual page. Minimal vector face only: two
+// rounded-rect eyes (height scaled by eyeOpen, offset by gaze), a small
+// rounded-rect mouth scaled by mouthOpen. Monochrome, no clutter -- matches
+// BUILD_PLAN's "Nothing-style black/white/gray" visual language, same as
+// every other page in this file.
+// (FaceMotion.h and `face` are already declared above, before drawPage().)
+// ---------------------------------------------------------------------------
+void drawFace(const FaceFrame &f) {
+  const int16_t zoneTop = 33, zoneBottom = 154; // clear of the header and the "3 taps: close" hint
+  const int16_t cx = tft.width() / 2;
+  const int16_t cy = (zoneTop + zoneBottom) / 2 + (int16_t)(f.bob * 150.0f);
+  const int16_t eyeSpacing = 46, eyeW = 30, eyeHmax = 30;
+
+  tft.fillRect(0, zoneTop, tft.width(), zoneBottom - zoneTop, TFT_BLACK);
+
+  int16_t eyeH = (int16_t)(eyeHmax * f.eyeOpen);
+  if (eyeH < 3) eyeH = 3; // never fully vanish -- reads as a blink, not a glitch
+  int16_t gx = (int16_t)(f.gazeX * 10.0f);
+  int16_t gy = (int16_t)(f.gazeY * 8.0f);
+
+  tft.fillRoundRect(cx - eyeSpacing - eyeW / 2 + gx, cy - eyeH / 2 + gy, eyeW, eyeH, 6, TFT_WHITE);
+  tft.fillRoundRect(cx + eyeSpacing - eyeW / 2 + gx, cy - eyeH / 2 + gy, eyeW, eyeH, 6, TFT_WHITE);
+
+  int16_t mouthW = 26 + (int16_t)(f.mouthOpen * 20.0f);
+  int16_t mouthH = 3 + (int16_t)(f.mouthOpen * 14.0f);
+  tft.fillRoundRect(cx - mouthW / 2, cy + 34, mouthW, mouthH, mouthH / 2, TFT_WHITE);
 }
 
 // ---------------------------------------------------------------------------
@@ -343,6 +541,8 @@ void setup() {
 
   drawHeader();
   drawPage(currentPage); // enter the placeholder menu at page 0
+
+  startClockSync(); // fires WiFi.begin() and returns immediately -- launcher above is already interactive
 }
 
 void loop() {
@@ -356,6 +556,15 @@ void loop() {
       if (!pageOpened) {
         currentPage = (currentPage + 1) % PAGE_COUNT;
         drawPage(currentPage);
+      } else if (faceLive) {
+        // FORWARD is a no-op while any other page is open (unchanged) --
+        // reused here, only for the live face, to cycle the demo expression.
+        static const BlinkFaceState demoCycle[] = {
+            BlinkFaceState::Idle, BlinkFaceState::Listening,
+            BlinkFaceState::Thinking, BlinkFaceState::Speaking};
+        static uint8_t demoIdx = 0;
+        demoIdx = (demoIdx + 1) % 4;
+        face.setState(demoCycle[demoIdx], now);
       }
       showGesture("FORWARD (1 tap)", TFT_GREEN);
       break;
@@ -374,6 +583,7 @@ void loop() {
     case GESTURE_RESET:
       currentPage = 0;
       pageOpened = false;
+      faceLive = false;
       drawPage(currentPage);
       showGesture("RESET (hold)", TFT_RED);
       break;
@@ -387,6 +597,13 @@ void loop() {
   if (otaActive) {
     ArduinoOTA.handle();
   }
+
+  if (faceLive) {
+    drawFace(face.update(now)); // non-blocking, self-timed inside FaceMotion
+  }
+
+  pollClockSync(now);   // no-op once Synced or Failed
+  updateClockWidget(now); // no-op until timeSynced; redraws only on actual change
 
   // Heartbeat so we can confirm it's alive and not blocking, per BUILD_PLAN
   // non-blocking-UI rule -- nothing here yet, just a serial pulse.
