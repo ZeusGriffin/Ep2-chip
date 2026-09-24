@@ -1,8 +1,9 @@
 ---
 project: BLINK Landscape Desktop
-status: prototype
+status: production-ready
 platform: iPhone 15 Pro
 delivery: PWA
+site: https://blink-landscape-desktop.zeusonsora.chatgpt.site
 tags: [blink, node, iphone, pwa, product-design]
 ---
 
@@ -32,9 +33,12 @@ Make the iPhone usable like a small landscape computer without letting the keybo
 
 - Responsive landscape/portrait interface.
 - Compact keyboard that avoids triggering Apple's full-height keyboard.
-- Working Canvas, Read, Type, Voice, Share, immersive, and send controls.
-- Installable web-app manifest and offline shell.
-- Local sample conversation; OpenAI service connection is intentionally not included in this prototype.
+- Persistent conversations stored on the device, with reusable canvases.
+- Working Canvas, Read, Type, Voice dictation, Share, immersive, and send controls.
+- Hardware-keyboard input that does not summon the Apple keyboard.
+- Installable web-app manifest, app icon, and offline shell.
+- Secure `/api/chat` worker route using OpenAI's Responses API.
+- Loading, retry, disconnected, and ready connection states.
 
 ## Verification target
 
@@ -43,6 +47,10 @@ Make the iPhone usable like a small landscape computer without letting the keybo
 - Reading canvas remains visible with the compact keyboard open.
 - Touch controls remain usable and text stays readable.
 
-## Next integration
+## Secure AI connection
 
-Add a secure server-side OpenAI connection after the interface is approved. Never put an API key in browser code or commit it to Git.
+The production Site stores `OPENAI_API_KEY` as a server-side secret. The key never enters browser code, local storage, this Obsidian note, or Git.
+
+## Install URL
+
+https://blink-landscape-desktop.zeusonsora.chatgpt.site

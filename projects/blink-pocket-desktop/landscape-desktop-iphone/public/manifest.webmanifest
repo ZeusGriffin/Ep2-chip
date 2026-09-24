@@ -7,5 +7,16 @@
   "background_color": "#111111",
   "theme_color": "#111111",
   "orientation": "landscape",
-  "icons": []
+  "icons": [
+    {
+      "src": "/icons/blink-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/blink-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
 }
