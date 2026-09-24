@@ -391,15 +391,17 @@ void updateClockWidget(uint32_t now) {
 // on screen, not just print a label. Placeholder page names only; real app
 // content (AI Face, Wi-Fi Radar, Miner, etc.) is a later milestone.
 // ---------------------------------------------------------------------------
-static const char *PAGE_NAMES[] = {"HOME", "WIFI", "MINER", "SETTINGS", "ABOUT", "FACE"};
+static const char *PAGE_NAMES[] = {"HOME", "WIFI", "MINER", "SETTINGS", "ABOUT", "FACE", "ZEMO"};
 static const uint8_t PAGE_COUNT = sizeof(PAGE_NAMES) / sizeof(PAGE_NAMES[0]);
 #define WIFI_PAGE_INDEX 1  // real Wi-Fi Radar content below, same "reuse FORWARD-while-open" pattern as FACE
 #define ABOUT_PAGE_INDEX 4 // real System Info content below
 #define FACE_PAGE_INDEX 5 // appended after the 5 existing approved pages -- their indices/order are untouched
+#define ZEMO_PAGE_INDEX 6 // appended after FACE -- talks to the real Zemo/AnythingLLM brain over Wi-Fi
 static uint8_t currentPage = 0;
 static bool pageOpened = false; // SELECT opens/closes the current page; FORWARD/BACK/RESET close it
 static bool faceLive = false;   // true only when pageOpened && currentPage == FACE_PAGE_INDEX
 static bool radarLive = false;  // true only when pageOpened && currentPage == WIFI_PAGE_INDEX
+static bool zemoLive = false;   // true only when pageOpened && currentPage == ZEMO_PAGE_INDEX
 
 // Radar state must exist before drawPage() below (it sets radarState when the
 // WIFI page opens); the actual scan/draw logic (updateRadar()) is defined
@@ -409,6 +411,15 @@ static RadarState radarState = RadarState::Idle;
 static uint32_t radarStateMs = 0;
 static const uint32_t RADAR_AUTO_REFRESH_MS = 6000;
 
+// Zemo connectivity state -- must exist before drawPage() below (it checks
+// zemoState when the ZEMO page opens); the real client logic (zemoSendMessage(),
+// the background task, drawing) is defined later, only reached from loop()/
+// the FORWARD gesture handler -- same forward-decl pattern as `face`/radar.
+enum class ZemoState : uint8_t { NotConfigured, Idle, Sending, ShowingReply, Error };
+static ZemoState zemoState = ZemoState::NotConfigured;
+static char zemoReplyBuf[220] = "";
+static char zemoErrorBuf[64] = "";
+
 // `face` must exist before drawPage() below (it calls face.reset() when the
 // FACE page opens); drawFace() itself is defined later, only called from loop().
 #include <FaceMotion.h>
@@ -417,6 +428,7 @@ static FaceMotion face;
 // Forward decl -- real body (needs ESP.*/WiFi.* calls) defined after drawPage(),
 // same pattern as drawFace(): drawPage() only needs to call it, not define it.
 void drawAboutContent();
+void drawZemoContent(); // draws the face + current status/reply for the ZEMO page
 
 void drawPage(uint8_t page) {
   const int16_t top = 31, bottom = tft.height() - 60;
@@ -431,6 +443,7 @@ void drawPage(uint8_t page) {
     // there's no live AI backend driving these states yet.
     faceLive = true;
     radarLive = false;
+    zemoLive = false;
     face.reset(millis());
     tft.setFreeFont(FONT_META);
     tft.drawString("1 tap: next state", tft.width() / 2, top + 14);
@@ -442,6 +455,7 @@ void drawPage(uint8_t page) {
     // Passive scan only -- SSID/RSSI/open-or-locked, no deauth/cracking/etc.
     faceLive = false;
     radarLive = true;
+    zemoLive = false;
     radarState = RadarState::Idle; // updateRadar() kicks off the first scan next tick
     radarStateMs = millis();
     tft.setFreeFont(FONT_META);
@@ -453,14 +467,34 @@ void drawPage(uint8_t page) {
     // change; chip/flash/MAC don't). Not animated -- no loop() polling needed.
     faceLive = false;
     radarLive = false;
+    zemoLive = false;
     drawAboutContent();
     tft.setFreeFont(FONT_META);
     tft.drawString("1 tap: refresh", tft.width() / 2, top + 14);
     tft.drawString("3 taps: close", tft.width() / 2, bottom - 14);
     tft.setTextFont(1);
+  } else if (pageOpened && page == ZEMO_PAGE_INDEX) {
+    // Live Zemo (AnythingLLM) chat -- reuses the same face as FACE_PAGE_INDEX,
+    // in a shorter zone (room left below for status/reply text). Real Wi-Fi
+    // client, verified against AnythingLLM's own source -- see zemoSendMessage()
+    // below. 1 tap sends a fixed test ping; stays inert if unconfigured or
+    // while Lacey/AnythingLLM aren't actually running.
+    faceLive = false;
+    radarLive = false;
+    zemoLive = true;
+    face.reset(millis());
+    zemoState = (strlen(ZEMO_HOST) == 0 || strlen(ZEMO_WORKSPACE_SLUG) == 0 || strlen(ZEMO_API_KEY) == 0)
+                    ? ZemoState::NotConfigured
+                    : ZemoState::Idle;
+    drawZemoContent();
+    tft.setFreeFont(FONT_META);
+    tft.drawString("1 tap: ping zemo", tft.width() / 2, top + 14);
+    tft.drawString("3 taps: close", tft.width() / 2, bottom - 14);
+    tft.setTextFont(1);
   } else if (pageOpened) {
     faceLive = false;
     radarLive = false;
+    zemoLive = false;
     // Framed "open" state -- a distinct boxed panel, not just the browsing view.
     tft.drawRect(12, top + 10, tft.width() - 24, bottom - top - 20, TFT_WHITE);
     tft.setFreeFont(FONT_DISPLAY);
@@ -470,8 +504,9 @@ void drawPage(uint8_t page) {
     tft.drawString("3 taps: close", tft.width() / 2, bottom - 14);
     tft.setTextFont(1);
   } else {
-    faceLive = false; // covers SELECT closing FACE/WIFI/ABOUT back to plain browsing
+    faceLive = false; // covers SELECT closing FACE/WIFI/ABOUT/ZEMO back to plain browsing
     radarLive = false;
+    zemoLive = false;
     tft.setFreeFont(FONT_DISPLAY);
     tft.drawString(PAGE_NAMES[page], tft.width() / 2, tft.height() / 2 - 10);
 
@@ -496,9 +531,13 @@ void drawPage(uint8_t page) {
 // BUILD_PLAN's "Nothing-style black/white/gray" visual language, same as
 // every other page in this file.
 // (FaceMotion.h and `face` are already declared above, before drawPage().)
+// zoneTop/zoneBottom let callers give it a shorter zone when the rest of the
+// page needs room too (e.g. ZEMO's status/reply text below it) -- FACE's own
+// call below passes the same 33/154 it always has, so its look is unchanged.
+// Eyebrows added (simple rects, tied to eyeOpen) to better match the
+// reference "eyes, eyebrows, mouth" face concept from Zemo by ZUZ.
 // ---------------------------------------------------------------------------
-void drawFace(const FaceFrame &f) {
-  const int16_t zoneTop = 33, zoneBottom = 154; // clear of the header and the "3 taps: close" hint
+void drawFace(const FaceFrame &f, int16_t zoneTop, int16_t zoneBottom) {
   const int16_t cx = tft.width() / 2;
   const int16_t cy = (zoneTop + zoneBottom) / 2 + (int16_t)(f.bob * 150.0f);
   const int16_t eyeSpacing = 46, eyeW = 30, eyeHmax = 30;
@@ -510,12 +549,266 @@ void drawFace(const FaceFrame &f) {
   int16_t gx = (int16_t)(f.gazeX * 10.0f);
   int16_t gy = (int16_t)(f.gazeY * 8.0f);
 
+  int16_t browY = cy - eyeH / 2 + gy - 10 - (int16_t)((1.0f - f.eyeOpen) * 4.0f); // dips slightly as eyes close
+  tft.fillRoundRect(cx - eyeSpacing - eyeW / 2 + gx - 2, browY, eyeW + 4, 4, 2, TFT_WHITE);
+  tft.fillRoundRect(cx + eyeSpacing - eyeW / 2 + gx - 2, browY, eyeW + 4, 4, 2, TFT_WHITE);
+
   tft.fillRoundRect(cx - eyeSpacing - eyeW / 2 + gx, cy - eyeH / 2 + gy, eyeW, eyeH, 6, TFT_WHITE);
   tft.fillRoundRect(cx + eyeSpacing - eyeW / 2 + gx, cy - eyeH / 2 + gy, eyeW, eyeH, 6, TFT_WHITE);
 
   int16_t mouthW = 26 + (int16_t)(f.mouthOpen * 20.0f);
   int16_t mouthH = 3 + (int16_t)(f.mouthOpen * 14.0f);
   tft.fillRoundRect(cx - mouthW / 2, cy + 34, mouthW, mouthH, mouthH / 2, TFT_WHITE);
+}
+
+// ---------------------------------------------------------------------------
+// Zemo by ZUZ -- BLINK-side client for Zee's local AnythingLLM/Ollama brain
+// (github.com/techjarves/Portable-AI-USB, runs off the "Lacey" USB drive).
+//
+// Endpoint verified tonight against the real, current AnythingLLM server
+// source (github.com/Mintplex-Labs/anything-llm, server/endpoints/api/
+// workspace/index.js line ~603 + server/index.js's app.use("/api", ...) and
+// default-port lines) -- not guessed:
+//   POST http://<ZEMO_HOST>:<ZEMO_PORT>/api/v1/workspace/<ZEMO_WORKSPACE_SLUG>/chat
+//   Authorization: Bearer <ZEMO_API_KEY>      Content-Type: application/json
+//   Body:  {"message":"...","mode":"chat","sessionId":"blink","reset":false}
+//   Reply: JSON, flat -- .textResponse (success) or .error (failure)
+//
+// NOT tested end-to-end -- Lacey isn't plugged in and the installer has
+// never been run, so no server exists to hit yet. This is real, compiled,
+// verified-against-source client code, waiting for that server.
+//
+// ESP32 Arduino's HTTPClient has no async mode, and an LLM reply can take
+// many seconds -- so the actual request runs on a FreeRTOS task pinned to
+// core 0, keeping gestures/animations on core 1 responsive the whole time
+// (this file's non-blocking rule, same reason the clock/radar are async).
+//
+// Uses a raw WiFiClient + hand-built HTTP/1.1 request, not the HTTPClient
+// class -- HTTPClient unconditionally pulls in WiFiClientSecure/mbedTLS
+// (for https:// support this local, plain-http:// API doesn't need), which
+// pushed the compiled binary 7.6KB past the 1.25MB partition limit on first
+// try. WiFiClient alone adds zero new flash footprint (already linked in via
+// WiFi.h for the clock/radar/OTA).
+//
+// Only sends a fixed test message tonight (1 tap while the page is open) --
+// free-text chat via the BLE keyboard needs a real text-entry mode (keycode
+// ->ASCII table, on-screen editing, line-wrapped rendering) that doesn't
+// exist yet and isn't something to improvise blind. Flagged, not guessed.
+// ---------------------------------------------------------------------------
+#include <WiFiClient.h>
+
+static const char *ZEMO_TEST_MESSAGE = "Hey Zemo, BLINK here -- can you hear me?";
+static TaskHandle_t zemoTaskHandle = nullptr;
+static volatile bool zemoTaskDone = false;
+
+// Pulls one JSON string field's value out of AnythingLLM's flat, single-level
+// {"textResponse": "...", "error": null} response shape. Not a general JSON
+// parser (no nesting, no escaped-quote handling) -- sufficient for that
+// confirmed shape; flag if a real reply ever breaks this assumption.
+bool extractJsonStringField(const String &json, const char *key, char *out, size_t outLen) {
+  String pat = String("\"") + key + "\":\"";
+  int start = json.indexOf(pat);
+  if (start < 0) return false;
+  start += pat.length();
+  int end = json.indexOf('"', start);
+  if (end < 0) end = json.length();
+  int n = end - start;
+  if (n >= (int)outLen) n = outLen - 1;
+  if (n < 0) n = 0;
+  json.substring(start, start + n).toCharArray(out, n + 1);
+  return true;
+}
+
+void zemoTask(void *param) {
+  const char *message = (const char *)param;
+
+  if (WiFi.status() != WL_CONNECTED) {
+    WiFi.mode(WIFI_STA);
+    WiFi.begin(WIFI_STA_SSID, WIFI_STA_PASS); // same home Wi-Fi as the clock/radar
+    uint32_t start = millis();
+    while (WiFi.status() != WL_CONNECTED && millis() - start < 8000) {
+      vTaskDelay(pdMS_TO_TICKS(100)); // blocks this task only -- core 1 (loop()) keeps running
+    }
+  }
+
+  if (WiFi.status() != WL_CONNECTED) {
+    strncpy(zemoErrorBuf, "wifi connect failed", sizeof(zemoErrorBuf));
+    zemoTaskDone = true;
+    vTaskDelete(nullptr);
+    return;
+  }
+
+  WiFiClient client;
+  client.setTimeout(30000); // LLM replies can be slow -- generous, this is off the UI core
+  if (!client.connect(ZEMO_HOST, ZEMO_PORT)) {
+    strncpy(zemoErrorBuf, "connect failed", sizeof(zemoErrorBuf));
+    zemoTaskDone = true;
+    vTaskDelete(nullptr);
+    return;
+  }
+
+  char body[320];
+  snprintf(body, sizeof(body),
+           "{\"message\":\"%s\",\"mode\":\"chat\",\"sessionId\":\"blink\",\"reset\":false}",
+           message); // fixed message only tonight, so no JSON-escaping needed yet
+  size_t bodyLen = strlen(body);
+
+  char reqHeader[256];
+  snprintf(reqHeader, sizeof(reqHeader),
+           "POST /api/v1/workspace/%s/chat HTTP/1.1\r\n"
+           "Host: %s:%d\r\n"
+           "Authorization: Bearer %s\r\n"
+           "Content-Type: application/json\r\n"
+           "Content-Length: %u\r\n"
+           "Connection: close\r\n\r\n",
+           ZEMO_WORKSPACE_SLUG, ZEMO_HOST, ZEMO_PORT, ZEMO_API_KEY, (unsigned)bodyLen);
+  client.print(reqHeader);
+  client.print(body);
+
+  String statusLine = client.readStringUntil('\n');
+  bool ok200 = statusLine.indexOf("200") > 0;
+
+  while (client.connected() || client.available()) { // skip headers to the blank line
+    String line = client.readStringUntil('\n');
+    if (line.length() <= 1) break; // "\r" alone (or nothing left)
+  }
+
+  String respBody;
+  uint32_t readStart = millis();
+  while ((client.connected() || client.available()) && millis() - readStart < 30000 && respBody.length() < 1024) {
+    while (client.available() && respBody.length() < 1024) respBody += (char)client.read();
+  }
+  client.stop();
+
+  if (!ok200) {
+    snprintf(zemoErrorBuf, sizeof(zemoErrorBuf), "http error: %s", statusLine.c_str());
+  } else if (!extractJsonStringField(respBody, "textResponse", zemoReplyBuf, sizeof(zemoReplyBuf))) {
+    if (!extractJsonStringField(respBody, "error", zemoErrorBuf, sizeof(zemoErrorBuf))) {
+      strncpy(zemoErrorBuf, "empty reply", sizeof(zemoErrorBuf));
+    }
+  }
+  zemoTaskDone = true;
+  vTaskDelete(nullptr);
+}
+
+void zemoSendMessage(const char *message) {
+  if (zemoState == ZemoState::NotConfigured || zemoState == ZemoState::Sending) return;
+  zemoReplyBuf[0] = 0;
+  zemoErrorBuf[0] = 0;
+  zemoTaskDone = false;
+  zemoState = ZemoState::Sending;
+  face.setState(BlinkFaceState::Thinking, millis());
+  xTaskCreatePinnedToCore(zemoTask, "zemoTask", 8192, (void *)message, 1, &zemoTaskHandle, 0);
+}
+
+// Simple, bounded word-wrap -- no library, just enough for a short LLM reply
+// in a small status zone. Truncates with "..." past maxLines.
+void drawWrappedText(const char *text, int16_t cx, int16_t yStart, int16_t lineH, uint8_t maxLines, uint8_t maxCharsPerLine) {
+  tft.setTextDatum(MC_DATUM);
+  tft.setFreeFont(FONT_META);
+  tft.setTextColor(TFT_WHITE, TFT_BLACK);
+
+  char line[40];
+  const char *p = text;
+  uint8_t drawn = 0;
+  while (*p && drawn < maxLines) {
+    uint8_t n = 0;
+    const char *lastSpace = nullptr;
+    const char *scan = p;
+    while (*scan && n < maxCharsPerLine) {
+      if (*scan == ' ') lastSpace = scan;
+      scan++;
+      n++;
+    }
+    uint8_t take = n;
+    if (*scan && lastSpace) take = lastSpace - p; // break on the last space, not mid-word
+    bool lastLine = (drawn == maxLines - 1);
+    strncpy(line, p, take);
+    line[take] = 0;
+    p += take;
+    while (*p == ' ') p++;
+    if (lastLine && *p) { // more text than fits -- mark truncation
+      if (take > (uint8_t)(maxCharsPerLine - 3)) take = maxCharsPerLine - 3;
+      line[take] = 0;
+      strcat(line, "...");
+    }
+    tft.drawString(line, cx, yStart + drawn * lineH);
+    drawn++;
+  }
+  tft.setTextFont(1);
+}
+
+void drawZemoContent() {
+  const int16_t faceTop = 40, faceBottom = 104, statusTop = 112, statusBottom = 156;
+  drawFace(face.update(millis()), faceTop, faceBottom);
+  tft.fillRect(0, statusTop, tft.width(), statusBottom - statusTop, TFT_BLACK);
+
+  switch (zemoState) {
+    case ZemoState::NotConfigured:
+      tft.setTextDatum(MC_DATUM);
+      tft.setFreeFont(FONT_META);
+      tft.setTextColor(TFT_DARKGREY, TFT_BLACK);
+      tft.drawString("not configured", tft.width() / 2, (statusTop + statusBottom) / 2 - 8);
+      tft.drawString("see include/secrets.h", tft.width() / 2, (statusTop + statusBottom) / 2 + 12);
+      tft.setTextColor(TFT_WHITE, TFT_BLACK);
+      tft.setTextFont(1);
+      break;
+    case ZemoState::Idle:
+      tft.setTextDatum(MC_DATUM);
+      tft.setFreeFont(FONT_META);
+      tft.setTextColor(TFT_DARKGREY, TFT_BLACK);
+      tft.drawString("ready", tft.width() / 2, (statusTop + statusBottom) / 2);
+      tft.setTextColor(TFT_WHITE, TFT_BLACK);
+      tft.setTextFont(1);
+      break;
+    case ZemoState::Sending:
+      tft.setTextDatum(MC_DATUM);
+      tft.setFreeFont(FONT_META);
+      tft.setTextColor(TFT_YELLOW, TFT_BLACK);
+      tft.drawString("sending...", tft.width() / 2, (statusTop + statusBottom) / 2);
+      tft.setTextColor(TFT_WHITE, TFT_BLACK);
+      tft.setTextFont(1);
+      break;
+    case ZemoState::ShowingReply:
+      drawWrappedText(zemoReplyBuf, tft.width() / 2, statusTop + 2, 16, 3, 22);
+      break;
+    case ZemoState::Error:
+      tft.setTextDatum(MC_DATUM);
+      tft.setFreeFont(FONT_META);
+      tft.setTextColor(TFT_RED, TFT_BLACK);
+      tft.drawString(zemoErrorBuf, tft.width() / 2, (statusTop + statusBottom) / 2);
+      tft.setTextColor(TFT_WHITE, TFT_BLACK);
+      tft.setTextFont(1);
+      break;
+  }
+}
+
+// Called every loop() tick while zemoLive. Keeps the face animating; once the
+// background task finishes, reads the result and moves the state machine on.
+void updateZemoPage(uint32_t now) {
+  drawFace(face.update(now), 40, 104);
+
+  if (zemoState == ZemoState::Sending && zemoTaskDone) {
+    if (zemoReplyBuf[0]) {
+      zemoState = ZemoState::ShowingReply;
+      face.setState(BlinkFaceState::Speaking, now);
+    } else {
+      zemoState = ZemoState::Error;
+      face.setState(BlinkFaceState::Idle, now);
+    }
+    const int16_t statusTop = 112, statusBottom = 156;
+    tft.fillRect(0, statusTop, tft.width(), statusBottom - statusTop, TFT_BLACK);
+    if (zemoState == ZemoState::ShowingReply) {
+      drawWrappedText(zemoReplyBuf, tft.width() / 2, statusTop + 2, 16, 3, 22);
+    } else {
+      tft.setTextDatum(MC_DATUM);
+      tft.setFreeFont(FONT_META);
+      tft.setTextColor(TFT_RED, TFT_BLACK);
+      tft.drawString(zemoErrorBuf, tft.width() / 2, (statusTop + statusBottom) / 2);
+      tft.setTextColor(TFT_WHITE, TFT_BLACK);
+      tft.setTextFont(1);
+    }
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -731,6 +1024,8 @@ void loop() {
         radarState = RadarState::Idle; // FORWARD = force a manual re-scan
       } else if (pageOpened && currentPage == ABOUT_PAGE_INDEX) {
         drawAboutContent(); // FORWARD = refresh uptime/heap
+      } else if (zemoLive) {
+        zemoSendMessage(ZEMO_TEST_MESSAGE); // FORWARD = ping Zemo (no-op if not configured/already sending)
       }
       showGesture("FORWARD (1 tap)", TFT_GREEN);
       break;
@@ -751,6 +1046,7 @@ void loop() {
       pageOpened = false;
       faceLive = false;
       radarLive = false;
+      zemoLive = false;
       drawPage(currentPage);
       showGesture("RESET (hold)", TFT_RED);
       break;
@@ -766,11 +1062,15 @@ void loop() {
   }
 
   if (faceLive) {
-    drawFace(face.update(now)); // non-blocking, self-timed inside FaceMotion
+    drawFace(face.update(now), 33, 154); // non-blocking, self-timed inside FaceMotion
   }
 
   if (radarLive) {
     updateRadar(now); // async scan poll + auto-refresh, never blocks
+  }
+
+  if (zemoLive) {
+    updateZemoPage(now); // face keeps animating; picks up the background task's result once done
   }
 
   pollClockSync(now);   // no-op once Synced or Failed
