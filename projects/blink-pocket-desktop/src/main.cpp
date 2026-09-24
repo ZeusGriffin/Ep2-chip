@@ -393,15 +393,30 @@ void updateClockWidget(uint32_t now) {
 // ---------------------------------------------------------------------------
 static const char *PAGE_NAMES[] = {"HOME", "WIFI", "MINER", "SETTINGS", "ABOUT", "FACE"};
 static const uint8_t PAGE_COUNT = sizeof(PAGE_NAMES) / sizeof(PAGE_NAMES[0]);
+#define WIFI_PAGE_INDEX 1  // real Wi-Fi Radar content below, same "reuse FORWARD-while-open" pattern as FACE
+#define ABOUT_PAGE_INDEX 4 // real System Info content below
 #define FACE_PAGE_INDEX 5 // appended after the 5 existing approved pages -- their indices/order are untouched
 static uint8_t currentPage = 0;
 static bool pageOpened = false; // SELECT opens/closes the current page; FORWARD/BACK/RESET close it
 static bool faceLive = false;   // true only when pageOpened && currentPage == FACE_PAGE_INDEX
+static bool radarLive = false;  // true only when pageOpened && currentPage == WIFI_PAGE_INDEX
+
+// Radar state must exist before drawPage() below (it sets radarState when the
+// WIFI page opens); the actual scan/draw logic (updateRadar()) is defined
+// later, only called from loop() -- same forward-decl pattern as `face`.
+enum class RadarState : uint8_t { Idle, WaitingForClock, Scanning, Shown };
+static RadarState radarState = RadarState::Idle;
+static uint32_t radarStateMs = 0;
+static const uint32_t RADAR_AUTO_REFRESH_MS = 6000;
 
 // `face` must exist before drawPage() below (it calls face.reset() when the
 // FACE page opens); drawFace() itself is defined later, only called from loop().
 #include <FaceMotion.h>
 static FaceMotion face;
+
+// Forward decl -- real body (needs ESP.*/WiFi.* calls) defined after drawPage(),
+// same pattern as drawFace(): drawPage() only needs to call it, not define it.
+void drawAboutContent();
 
 void drawPage(uint8_t page) {
   const int16_t top = 31, bottom = tft.height() - 60;
@@ -415,13 +430,37 @@ void drawPage(uint8_t page) {
     // through Idle/Listening/Thinking/Speaking for a hands-off demo since
     // there's no live AI backend driving these states yet.
     faceLive = true;
+    radarLive = false;
     face.reset(millis());
     tft.setFreeFont(FONT_META);
     tft.drawString("1 tap: next state", tft.width() / 2, top + 14);
     tft.drawString("3 taps: close", tft.width() / 2, bottom - 14);
     tft.setTextFont(1);
+  } else if (pageOpened && page == WIFI_PAGE_INDEX) {
+    // Live Wi-Fi Radar -- chrome drawn once here; updateRadar() (loop()) does
+    // the actual async scan + result rendering into the zone below this.
+    // Passive scan only -- SSID/RSSI/open-or-locked, no deauth/cracking/etc.
+    faceLive = false;
+    radarLive = true;
+    radarState = RadarState::Idle; // updateRadar() kicks off the first scan next tick
+    radarStateMs = millis();
+    tft.setFreeFont(FONT_META);
+    tft.drawString("passive scan only", tft.width() / 2, top + 14);
+    tft.drawString("3 taps: close", tft.width() / 2, bottom - 14);
+    tft.setTextFont(1);
+  } else if (pageOpened && page == ABOUT_PAGE_INDEX) {
+    // Real device info, drawn once here + refreshed on FORWARD (uptime/heap
+    // change; chip/flash/MAC don't). Not animated -- no loop() polling needed.
+    faceLive = false;
+    radarLive = false;
+    drawAboutContent();
+    tft.setFreeFont(FONT_META);
+    tft.drawString("1 tap: refresh", tft.width() / 2, top + 14);
+    tft.drawString("3 taps: close", tft.width() / 2, bottom - 14);
+    tft.setTextFont(1);
   } else if (pageOpened) {
     faceLive = false;
+    radarLive = false;
     // Framed "open" state -- a distinct boxed panel, not just the browsing view.
     tft.drawRect(12, top + 10, tft.width() - 24, bottom - top - 20, TFT_WHITE);
     tft.setFreeFont(FONT_DISPLAY);
@@ -431,7 +470,8 @@ void drawPage(uint8_t page) {
     tft.drawString("3 taps: close", tft.width() / 2, bottom - 14);
     tft.setTextFont(1);
   } else {
-    faceLive = false; // covers SELECT closing FACE back to plain browsing
+    faceLive = false; // covers SELECT closing FACE/WIFI/ABOUT back to plain browsing
+    radarLive = false;
     tft.setFreeFont(FONT_DISPLAY);
     tft.drawString(PAGE_NAMES[page], tft.width() / 2, tft.height() / 2 - 10);
 
@@ -476,6 +516,128 @@ void drawFace(const FaceFrame &f) {
   int16_t mouthW = 26 + (int16_t)(f.mouthOpen * 20.0f);
   int16_t mouthH = 3 + (int16_t)(f.mouthOpen * 14.0f);
   tft.fillRoundRect(cx - mouthW / 2, cy + 34, mouthW, mouthH, mouthH / 2, TFT_WHITE);
+}
+
+// ---------------------------------------------------------------------------
+// Wi-Fi Radar (BUILD_PLAN Phase 1, item 6 / README's explicit spec) --
+// PASSIVE scan only: SSID, RSSI (dBm), open-vs-locked. No deauth, cracking,
+// credential capture, packet injection, or impersonation -- not built, not
+// planned. Async scan (WiFi.scanNetworks(true)) so it never blocks loop().
+// Coordinates with the clock widget's Wi-Fi use: waits if a clock sync is
+// still connecting, and never fights startOtaMode()'s AP mode.
+// ---------------------------------------------------------------------------
+const int16_t RADAR_ZONE_TOP = 59, RADAR_ZONE_BOTTOM = 156; // clear of the two static chrome lines drawPage() drew
+
+void drawRadarStatus(const char *msg) {
+  tft.fillRect(0, RADAR_ZONE_TOP, tft.width(), RADAR_ZONE_BOTTOM - RADAR_ZONE_TOP, TFT_BLACK);
+  tft.setTextDatum(MC_DATUM);
+  tft.setFreeFont(FONT_META);
+  tft.setTextColor(TFT_DARKGREY, TFT_BLACK);
+  tft.drawString(msg, tft.width() / 2, (RADAR_ZONE_TOP + RADAR_ZONE_BOTTOM) / 2);
+  tft.setTextColor(TFT_WHITE, TFT_BLACK);
+  tft.setTextFont(1);
+}
+
+void drawRadarResults(int16_t n) {
+  tft.fillRect(0, RADAR_ZONE_TOP, tft.width(), RADAR_ZONE_BOTTOM - RADAR_ZONE_TOP, TFT_BLACK);
+  if (n <= 0) {
+    drawRadarStatus("no networks found");
+    return;
+  }
+  uint8_t shown = (n > 5) ? 5 : (uint8_t)n;
+  tft.setTextDatum(TL_DATUM);
+  tft.setFreeFont(FONT_META);
+  tft.setTextColor(TFT_WHITE, TFT_BLACK);
+  for (uint8_t i = 0; i < shown; i++) {
+    char ssidBuf[15];
+    strncpy(ssidBuf, WiFi.SSID(i).c_str(), 14);
+    ssidBuf[14] = 0;
+    char line[40];
+    snprintf(line, sizeof(line), "%-14s %4ld %s", ssidBuf, (long)WiFi.RSSI(i),
+             (WiFi.encryptionType(i) == WIFI_AUTH_OPEN) ? "open" : "lock");
+    tft.drawString(line, 10, RADAR_ZONE_TOP + i * 18);
+  }
+  tft.setTextDatum(MC_DATUM);
+  tft.setTextFont(1);
+}
+
+void updateRadar(uint32_t now) {
+  switch (radarState) {
+    case RadarState::Idle:
+      if (otaActive) return; // never fight OTA's AP mode
+      if (clockSyncState == ClockSyncState::Connecting || clockSyncState == ClockSyncState::WaitingForTime) {
+        radarState = RadarState::WaitingForClock;
+        drawRadarStatus("waiting for clock sync");
+        return;
+      }
+      WiFi.mode(WIFI_STA);
+      WiFi.scanNetworks(true); // async -- non-blocking
+      radarState = RadarState::Scanning;
+      radarStateMs = now;
+      drawRadarStatus("scanning...");
+      Serial.println("[radar] scan started");
+      break;
+    case RadarState::WaitingForClock:
+      if (!(clockSyncState == ClockSyncState::Connecting || clockSyncState == ClockSyncState::WaitingForTime)) {
+        radarState = RadarState::Idle; // clock resolved -- retry next tick
+      }
+      break;
+    case RadarState::Scanning: {
+      int16_t n = WiFi.scanComplete();
+      if (n == WIFI_SCAN_FAILED) {
+        drawRadarStatus("scan failed");
+        radarState = RadarState::Shown;
+        radarStateMs = now;
+      } else if (n >= 0) {
+        drawRadarResults(n);
+        WiFi.scanDelete();
+        radarState = RadarState::Shown;
+        radarStateMs = now;
+        Serial.printf("[radar] found %d networks\n", n);
+      } // else still WIFI_SCAN_RUNNING -- keep waiting, no draw
+      break;
+    }
+    case RadarState::Shown:
+      if (now - radarStateMs >= RADAR_AUTO_REFRESH_MS) {
+        radarState = RadarState::Idle; // auto re-scan
+      }
+      break;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// System Info (BUILD_PLAN Phase 1, item 7) -- all real, live-queried values.
+// No guessed/fake data: chip model + flash size come from the running ESP32
+// itself, MAC from the radio, build timestamp from the compiler, uptime/heap
+// computed live. Static (not animated) -- redrawn once on open + on FORWARD.
+// ---------------------------------------------------------------------------
+void drawAboutContent() {
+  const int16_t zoneTop = 59, zoneBottom = 156;
+  tft.fillRect(0, zoneTop, tft.width(), zoneBottom - zoneTop, TFT_BLACK);
+  tft.setTextDatum(TL_DATUM);
+  tft.setFreeFont(FONT_META);
+  tft.setTextColor(TFT_WHITE, TFT_BLACK);
+
+  char line[40];
+  uint32_t upS = millis() / 1000;
+  int16_t y = zoneTop;
+
+  snprintf(line, sizeof(line), "%s rev%d", ESP.getChipModel(), ESP.getChipRevision());
+  tft.drawString(line, 10, y); y += 18;
+  snprintf(line, sizeof(line), "flash %luKB", (unsigned long)(ESP.getFlashChipSize() / 1024));
+  tft.drawString(line, 10, y); y += 18;
+  snprintf(line, sizeof(line), "heap %luKB free", (unsigned long)(ESP.getFreeHeap() / 1024));
+  tft.drawString(line, 10, y); y += 18;
+  snprintf(line, sizeof(line), "up %luh %02lum %02lus", (unsigned long)(upS / 3600),
+           (unsigned long)((upS / 60) % 60), (unsigned long)(upS % 60));
+  tft.drawString(line, 10, y); y += 18;
+  snprintf(line, sizeof(line), "%s", WiFi.macAddress().c_str());
+  tft.drawString(line, 10, y); y += 18;
+  snprintf(line, sizeof(line), "build %s %s", __DATE__, __TIME__);
+  tft.drawString(line, 10, y);
+
+  tft.setTextDatum(MC_DATUM);
+  tft.setTextFont(1);
 }
 
 // ---------------------------------------------------------------------------
@@ -565,6 +727,10 @@ void loop() {
         static uint8_t demoIdx = 0;
         demoIdx = (demoIdx + 1) % 4;
         face.setState(demoCycle[demoIdx], now);
+      } else if (radarLive) {
+        radarState = RadarState::Idle; // FORWARD = force a manual re-scan
+      } else if (pageOpened && currentPage == ABOUT_PAGE_INDEX) {
+        drawAboutContent(); // FORWARD = refresh uptime/heap
       }
       showGesture("FORWARD (1 tap)", TFT_GREEN);
       break;
@@ -584,6 +750,7 @@ void loop() {
       currentPage = 0;
       pageOpened = false;
       faceLive = false;
+      radarLive = false;
       drawPage(currentPage);
       showGesture("RESET (hold)", TFT_RED);
       break;
@@ -600,6 +767,10 @@ void loop() {
 
   if (faceLive) {
     drawFace(face.update(now)); // non-blocking, self-timed inside FaceMotion
+  }
+
+  if (radarLive) {
+    updateRadar(now); // async scan poll + auto-refresh, never blocks
   }
 
   pollClockSync(now);   // no-op once Synced or Failed
