@@ -37,7 +37,7 @@ Open the install URL in Safari, tap **Share**, choose **Add to Home Screen**, an
 
 ## OpenAI connection
 
-The browser calls `/api/chat`; the Site worker calls OpenAI's Responses API with the server-side `OPENAI_API_KEY` secret. Never place that key in browser code, the PWA bundle, or Git.
+The browser calls `/api/chat`; the Site worker calls OpenAI's Responses API after the server-side `OPENAI_API_KEY` secret is connected. Until then, the app shows **CONNECT AI**. Never place that key in browser code, the PWA bundle, or Git.
 
 ## Project notes
 

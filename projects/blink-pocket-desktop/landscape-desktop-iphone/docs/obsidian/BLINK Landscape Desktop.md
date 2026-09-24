@@ -1,6 +1,6 @@
 ---
 project: BLINK Landscape Desktop
-status: production-ready
+status: deployed-ai-authorization-pending
 platform: iPhone 15 Pro
 delivery: PWA
 site: https://blink-landscape-desktop.zeusonsora.chatgpt.site
@@ -49,7 +49,7 @@ Make the iPhone usable like a small landscape computer without letting the keybo
 
 ## Secure AI connection
 
-The production Site stores `OPENAI_API_KEY` as a server-side secret. The key never enters browser code, local storage, this Obsidian note, or Git.
+The OpenAI endpoint is deployed, but the production Site still needs its `OPENAI_API_KEY` server-side secret. OpenAI Developers is installed; OpenAI Platform authorization must finish before the key can be created and attached. The key never enters browser code, local storage, this Obsidian note, or Git.
 
 ## Install URL
 
