@@ -1,0 +1,11 @@
+{
+  "name": "BLINK Landscape Desktop",
+  "short_name": "BLINK",
+  "description": "A compact landscape reading and writing desktop for iPhone.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#111111",
+  "theme_color": "#111111",
+  "orientation": "landscape",
+  "icons": []
+}
