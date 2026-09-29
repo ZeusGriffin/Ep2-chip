@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>Pocket Tank — HTML Edition</title>
+<style>
+:root{--ink:#071316;--paper:#eaf5ef;--glass:#9ee8e4;--deep:#0a3f4a;--line:rgba(255,255,255,.22);--accent:#d8ff76}
+*{box-sizing:border-box}html,body{margin:0;background:#061012;color:var(--paper);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;min-height:100%}
+body{display:grid;place-items:center;padding:18px}
+.shell{width:min(440px,100%);border:1px solid #28464b;border-radius:28px;overflow:hidden;background:#09181c;box-shadow:0 24px 70px #0009}
+.top{padding:15px 16px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #244148}
+.brand{font-weight:900;letter-spacing:.18em;font-size:13px}.sub{opacity:.58;font-size:9px;margin-top:3px}
+.pill{font-size:9px;padding:7px 9px;border:1px solid #31545c;border-radius:99px;opacity:.86}
+.stage{position:relative;background:#082e37}
+canvas{width:100%;height:auto;display:block;touch-action:none}
+.hud{position:absolute;top:10px;left:10px;right:10px;display:flex;justify-content:space-between;pointer-events:none}
+.hud span{background:#061416aa;border:1px solid #ffffff18;border-radius:99px;padding:6px 8px;font-size:9px;backdrop-filter:blur(8px)}
+.card{position:absolute;left:14px;right:14px;bottom:14px;background:#071214e8;border:1px solid #ffffff25;border-radius:19px;padding:14px;backdrop-filter:blur(12px);display:none}
+.card.show{display:block}.card h3{margin:0 0 10px;font-size:14px;letter-spacing:.12em}.stats{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.stat{border-top:1px solid #ffffff18;padding-top:7px}.stat b{display:block;font-size:9px;opacity:.55;font-weight:500}.stat span{font-size:12px}
+.controls{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:12px}
+button,a.btn{appearance:none;border:1px solid #31545c;background:#0b2024;color:#edf7f3;border-radius:13px;padding:11px 7px;font:700 9px ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.05em;text-align:center;text-decoration:none}
+button:active,a.btn:active{transform:scale(.98)}button.primary{background:var(--accent);color:#152000;border-color:var(--accent)}
+.footer{display:flex;justify-content:space-between;gap:8px;padding:0 12px 13px;font-size:8px;opacity:.55}
+.sheet{display:none;padding:14px;border-top:1px solid #244148;background:#071214}.sheet.show{display:block}
+.row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid #ffffff12;font-size:10px}.row:last-child{border:0}
+.status{max-width:65%;text-align:right;opacity:.7}
+</style>
+</head>
+<body>
+<main class="shell">
+  <header class="top">
+    <div><div class="brand">POCKET TANK</div><div class="sub">HTML EDITION · BY ZEUS LAB</div></div>
+    <div class="pill" id="clock">DAY 01 · 08:00</div>
+  </header>
+
+  <section class="stage">
+    <canvas id="tank" width="820" height="1160"></canvas>
+    <div class="hud"><span id="population">2 FISH</span><span id="coins">0 SAND $</span></div>
+    <div class="card" id="card">
+      <h3 id="fishName">FISH 01</h3>
+      <div class="stats">
+        <div class="stat"><b>HUNGER</b><span id="hunger">0</span></div>
+        <div class="stat"><b>ENERGY</b><span id="energy">0</span></div>
+        <div class="stat"><b>TRUST</b><span id="trust">0</span></div>
+        <div class="stat"><b>GOAL</b><span id="goal">explore</span></div>
+      </div>
+    </div>
+  </section>
+
+  <nav class="controls">
+    <button class="primary" id="feed">FEED</button>
+    <button id="light">LIGHT</button>
+    <button id="reset">RESET</button>
+    <button id="more">MORE</button>
+  </nav>
+
+  <section class="sheet" id="sheet">
+    <div class="row"><b>UPSTREAM</b><span class="status">mediacutlet/pocket-tank</span></div>
+    <div class="row"><b>WEB BUILD</b><span class="status" id="buildStatus">local simulation</span></div>
+    <div class="row"><button id="checkUpdate">CHECK UPDATE</button><a class="btn" href="https://stratobuilds.com/pocket-tank-installer/" target="_blank" rel="noreferrer">FIRMWARE INSTALLER</a></div>
+    <div class="row"><b>TIP</b><span class="status">Tap a fish for stats. Tap water to feed. Double tap LIGHT for night.</span></div>
+  </section>
+
+  <footer class="footer"><span>OFFLINE-FRIENDLY</span><span>ORIGINAL PROJECT · MIT</span></footer>
+</main>
+
+<script>
+const canvas=document.getElementById('tank'),ctx=canvas.getContext('2d');
+const card=document.getElementById('card');
+const W=canvas.width,H=canvas.height;
+let night=false,coins=0,t=0,last=performance.now(),food=[];
+const palette=['#f5bf7f','#f38d72','#77d7d4','#ecd06d','#ba9cf2'];
+const fish=[
+  makeFish(245,430,0),
+  makeFish(570,700,1)
+];
+
+function makeFish(x,y,i){return{
+  id:i+1,name:['MICA','NORI','PICO','LUMA','KAI'][i]||('FISH '+(i+1)),
+  x,y,vx:(Math.random()>.5?1:-1)*(35+Math.random()*30),vy:(Math.random()-.5)*20,
+  hunger:3+Math.random()*2,energy:8,trust:2+i*.4,goal:'explore',
+  phase:Math.random()*6.28,color:palette[i%palette.length]
+}}
+
+function resize(){const r=canvas.getBoundingClientRect();canvas.style.height=(r.width*H/W)+'px'}resize();addEventListener('resize',resize);
+
+function drawBackground(){
+  const g=ctx.createLinearGradient(0,0,0,H);
+  if(night){g.addColorStop(0,'#041218');g.addColorStop(1,'#031016')}
+  else{g.addColorStop(0,'#176879');g.addColorStop(.55,'#0f5361');g.addColorStop(1,'#092f39')}
+  ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  ctx.globalAlpha=night?.18:.34;ctx.fillStyle='#b8fbff';
+  for(let i=0;i<18;i++){let x=(i*113+t*4)%W,y=(i*173)%H;ctx.beginPath();ctx.arc(x,y,2+(i%4),0,7);ctx.fill()}
+  ctx.globalAlpha=1;
+  ctx.fillStyle='#c8a978';ctx.fillRect(0,H-120,W,120);
+  for(let i=0;i<100;i++){ctx.fillStyle=i%2?'#92785e':'#e0c18a';ctx.beginPath();ctx.ellipse((i*91)%W,H-110+(i*37)%105,5+(i%7),3+(i%4),0,0,7);ctx.fill()}
+  drawGrass(70,H-120,120);drawGrass(640,H-120,150);
+  drawReef(410,H-115);
+}
+function drawGrass(x,b,h){
+  for(let i=0;i<18;i++){let xx=x+i*9,hh=h*(.55+((i*17)%40)/100);ctx.strokeStyle=i%3===0?'#52a67c':'#3c8c6b';ctx.lineWidth=6;ctx.beginPath();ctx.moveTo(xx,b);ctx.quadraticCurveTo(xx+Math.sin(t+i)*18,b-hh*.5,xx+Math.sin(t*.7+i)*10,b-hh);ctx.stroke()}
+}
+function drawReef(x,y){
+  ctx.fillStyle='#8c6258';ctx.beginPath();ctx.arc(x,y-20,72,Math.PI,0);ctx.fill();
+  ctx.strokeStyle='#d47882';ctx.lineWidth=16;
+  [[0,-80],[28,-64],[-28,-58]].forEach(([dx,dy],i)=>{ctx.beginPath();ctx.moveTo(x+dx,y-20);ctx.lineTo(x+dx*1.4,y+dy);ctx.stroke()})
+}
+function drawFish(f){
+  ctx.save();ctx.translate(f.x,f.y);if(f.vx<0)ctx.scale(-1,1);
+  const bob=Math.sin(t*3+f.phase)*3;ctx.translate(0,bob);
+  ctx.fillStyle=f.color;ctx.strokeStyle='#13272b';ctx.lineWidth=5;
+  ctx.beginPath();ctx.ellipse(0,0,52,28,0,0,Math.PI*2);ctx.fill();ctx.stroke();
+  ctx.beginPath();ctx.moveTo(-46,0);ctx.lineTo(-82,-31);ctx.lineTo(-76,32);ctx.closePath();ctx.fill();ctx.stroke();
+  ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(27,-7,7,0,7);ctx.fill();ctx.fillStyle='#102126';ctx.beginPath();ctx.arc(29,-7,3,0,7);ctx.fill();
+  ctx.restore();
+}
+function drawFood(){
+  food.forEach(p=>{ctx.fillStyle='#d8ff76';ctx.beginPath();ctx.arc(p.x,p.y,7,0,7);ctx.fill()})
+}
+function chooseGoal(f){
+  if(f.hunger>7&&food.length) return 'seek_food';
+  if(f.energy<2.5) return 'rest';
+  return Math.random()<.25?'visit_bubbles':Math.random()<.25?'follow_friend':'explore';
+}
+function update(dt){
+  t+=dt;
+  fish.forEach((f,i)=>{
+    f.hunger=Math.min(10,f.hunger+dt*.035);f.energy=Math.max(.5,Math.min(10,f.energy+(night?.025:-.006)*dt));
+    if(Math.random()<dt*.045)f.goal=chooseGoal(f);
+    if(f.goal==='seek_food'&&food.length){
+      let p=food[0],dx=p.x-f.x,dy=p.y-f.y,d=Math.hypot(dx,dy)||1;f.vx=dx/d*95;f.vy=dy/d*95;
+      if(d<38){food.shift();f.hunger=Math.max(0,f.hunger-3.4);f.trust=Math.min(10,f.trust+.25);coins+=2}
+    }else if(f.goal==='rest'){f.vx*=.97;f.vy*=.97}
+    else{
+      f.vx+=Math.sin(t*.8+f.phase)*dt*8;f.vy+=Math.cos(t*.65+f.phase)*dt*7;
+      let s=Math.hypot(f.vx,f.vy)||1,max=62; if(s>max){f.vx=f.vx/s*max;f.vy=f.vy/s*max}
+    }
+    f.x+=f.vx*dt;f.y+=f.vy*dt;
+    if(f.x<90){f.x=90;f.vx=Math.abs(f.vx)}if(f.x>W-90){f.x=W-90;f.vx=-Math.abs(f.vx)}
+    if(f.y<165){f.y=165;f.vy=Math.abs(f.vy)}if(f.y>H-180){f.y=H-180;f.vy=-Math.abs(f.vy)}
+  });
+  food.forEach(p=>p.y=Math.min(H-145,p.y+dt*35));
+}
+function render(now){
+  const dt=Math.min(.04,(now-last)/1000);last=now;update(dt);drawBackground();drawFood();fish.forEach(drawFish);
+  document.getElementById('coins').textContent=coins+' SAND $';
+  const mins=Math.floor(t*2)%1440,day=1+Math.floor(t*2/1440),hr=Math.floor(mins/60),mm=mins%60;
+  document.getElementById('clock').textContent='DAY '+String(day).padStart(2,'0')+' · '+String(hr).padStart(2,'0')+':'+String(mm).padStart(2,'0');
+  requestAnimationFrame(render)
+}requestAnimationFrame(render);
+
+function localPoint(e){const r=canvas.getBoundingClientRect(),sx=W/r.width,sy=H/r.height;return{x:(e.clientX-r.left)*sx,y:(e.clientY-r.top)*sy}}
+canvas.addEventListener('pointerup',e=>{
+  const p=localPoint(e);let hit=null,best=1e9;
+  fish.forEach(f=>{const d=Math.hypot(f.x-p.x,f.y-p.y);if(d<70&&d<best){hit=f;best=d}});
+  if(hit){showFish(hit)}else{food.push({x:p.x,y:p.y});fish.forEach(f=>{if(f.hunger>4)f.goal='seek_food'})}
+});
+function showFish(f){
+  card.classList.add('show');document.getElementById('fishName').textContent=f.name;
+  document.getElementById('hunger').textContent=f.hunger.toFixed(1)+' / 10';
+  document.getElementById('energy').textContent=f.energy.toFixed(1)+' / 10';
+  document.getElementById('trust').textContent=f.trust.toFixed(1)+' / 10';
+  document.getElementById('goal').textContent=f.goal.replace('_',' ');
+  setTimeout(()=>card.classList.remove('show'),4500)
+}
+function feed(){for(let i=0;i<5;i++)food.push({x:180+Math.random()*(W-360),y:145+Math.random()*40});fish.forEach(f=>f.goal='seek_food')}
+document.getElementById('feed').onclick=feed;
+document.getElementById('light').onclick=()=>night=!night;
+document.getElementById('reset').onclick=()=>{food=[];coins=0;t=0;fish.splice(0,fish.length,makeFish(245,430,0),makeFish(570,700,1));night=false};
+document.getElementById('more').onclick=()=>document.getElementById('sheet').classList.toggle('show');
+
+document.getElementById('checkUpdate').onclick=async()=>{
+  const el=document.getElementById('buildStatus');el.textContent='checking upstream…';
+  try{
+    const r=await fetch('https://api.github.com/repos/mediacutlet/pocket-tank/commits/main',{headers:{Accept:'application/vnd.github+json'}});
+    const j=await r.json();const d=new Date(j.commit.committer.date);
+    el.textContent='upstream '+j.sha.slice(0,7)+' · '+d.toLocaleDateString();
+  }catch(err){el.textContent='offline — check GitHub when connected'}
+};
+</script>
+</body>
+</html>
