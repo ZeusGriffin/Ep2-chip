@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#061012">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Pocket Tank — Phone</title>
+<style>
+:root{
+  --bg:#061012;--panel:#0a171a;--line:rgba(255,255,255,.14);
+  --text:#f2f7f5;--muted:#9bb0ad;--acid:#d8ff76;--cyan:#8ee8e0;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--text);
+font-family:ui-monospace,SFMono-Regular,Menlo,monospace;touch-action:manipulation}
+body{padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}
+.app{height:100%;display:grid;grid-template-rows:auto 1fr auto;background:#061012}
+header{
+  min-height:58px;padding:10px 14px 9px;display:flex;align-items:center;justify-content:space-between;
+  border-bottom:1px solid var(--line);background:rgba(6,16,18,.96);backdrop-filter:blur(14px);z-index:4
+}
+.brand{font-weight:900;letter-spacing:.19em;font-size:12px}.sub{font-size:8px;opacity:.55;margin-top:3px}
+.clock{font-size:9px;border:1px solid var(--line);padding:7px 9px;border-radius:999px;color:#d9e7e3}
+.stage{position:relative;min-height:0;overflow:hidden;background:#082e37}
+canvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+.hud{position:absolute;z-index:3;top:10px;left:10px;right:10px;display:flex;justify-content:space-between;pointer-events:none}
+.hud span{font-size:9px;padding:6px 9px;border:1px solid rgba(255,255,255,.15);border-radius:999px;background:rgba(4,15,17,.62);backdrop-filter:blur(8px)}
+.tip{position:absolute;z-index:3;left:50%;top:48px;transform:translateX(-50%);font-size:8px;color:#d9e6e3;opacity:.66;white-space:nowrap;pointer-events:none}
+.card{
+  position:absolute;z-index:5;left:12px;right:12px;bottom:12px;padding:14px;border:1px solid rgba(255,255,255,.20);
+  background:rgba(5,15,17,.90);backdrop-filter:blur(16px);border-radius:18px;transform:translateY(130%);transition:.24s ease
+}
+.card.show{transform:translateY(0)}
+.cardhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:11px}
+.card h3{margin:0;font-size:14px;letter-spacing:.13em}.close{font-size:9px;opacity:.55}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.stat{border-top:1px solid var(--line);padding-top:7px}.stat b{display:block;font-size:8px;color:var(--muted);font-weight:500}.stat span{font-size:12px}
+nav{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:7px;padding:9px 10px calc(9px + env(safe-area-inset-bottom));
+  border-top:1px solid var(--line);background:rgba(6,16,18,.98);z-index:6
+}
+button{appearance:none;border:1px solid #31545c;background:#0b2024;color:#edf7f3;border-radius:14px;min-height:48px;padding:7px 4px;
+font:800 9px ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.04em}
+button.primary{background:var(--acid);color:#142000;border-color:var(--acid)}
+button:active{transform:scale(.97)}
+.sheet{
+  position:fixed;z-index:20;left:0;right:0;bottom:0;padding:12px 12px calc(14px + env(safe-area-inset-bottom));
+  border-top:1px solid var(--line);border-radius:20px 20px 0 0;background:rgba(7,18,20,.97);backdrop-filter:blur(18px);
+  transform:translateY(110%);transition:.25s ease
+}
+.sheet.show{transform:translateY(0)}
+.handle{width:42px;height:4px;border-radius:999px;background:#ffffff2a;margin:0 auto 12px}
+.row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 2px;border-bottom:1px solid rgba(255,255,255,.08);font-size:9px}
+.row:last-child{border:0}.status{text-align:right;color:var(--muted)}
+.sheet button{min-height:42px;padding:8px 10px}
+@media (orientation:landscape){.app{grid-template-rows:auto 1fr auto}header{min-height:48px}.tip{display:none}}
+</style>
+</head>
+<body>
+<div class="app">
+<header>
+  <div><div class="brand">POCKET TANK</div><div class="sub">PHONE EDITION · BY ZEUS</div></div>
+  <div class="clock" id="clock">DAY 01 · 08:00</div>
+</header>
+
+<section class="stage" id="stage">
+  <canvas id="tank"></canvas>
+  <div class="hud"><span id="population">2 FISH</span><span id="coins">0 SAND $</span></div>
+  <div class="tip">TAP FISH = STATS · TAP WATER = FEED</div>
+  <div class="card" id="card">
+    <div class="cardhead"><h3 id="fishName">MICA</h3><span class="close">TAP WATER TO CLOSE</span></div>
+    <div class="stats">
+      <div class="stat"><b>HUNGER</b><span id="hunger">0</span></div>
+      <div class="stat"><b>ENERGY</b><span id="energy">0</span></div>
+      <div class="stat"><b>TRUST</b><span id="trust">0</span></div>
+      <div class="stat"><b>GOAL</b><span id="goal">explore</span></div>
+    </div>
+  </div>
+</section>
+
+<nav>
+  <button class="primary" id="feed">FEED</button>
+  <button id="light">LIGHT</button>
+  <button id="reset">RESET</button>
+  <button id="more">MORE</button>
+</nav>
+</div>
+
+<section class="sheet" id="sheet">
+  <div class="handle"></div>
+  <div class="row"><b>PHONE BUILD</b><span class="status">touch / portrait / safe-area</span></div>
+  <div class="row"><b>UPSTREAM</b><span class="status">mediacutlet/pocket-tank</span></div>
+  <div class="row"><button id="checkUpdate">CHECK UPDATE</button><button id="closeSheet">CLOSE</button></div>
+  <div class="row"><b>UPDATE</b><span class="status" id="buildStatus">not checked</span></div>
+</section>
+
+<script>
+const canvas=document.getElementById('tank'),ctx=canvas.getContext('2d'),stage=document.getElementById('stage');
+const card=document.getElementById('card'),sheet=document.getElementById('sheet');
+let W=390,H=700,DPR=1,night=false,coins=0,t=0,last=performance.now(),food=[];
+const colors=['#f5bf7f','#f38d72','#77d7d4','#ecd06d','#ba9cf2'];
+const fish=[makeFish(.30,.38,0),makeFish(.72,.62,1)];
+
+function makeFish(nx,ny,i){return{
+ id:i+1,name:['MICA','NORI','PICO','LUMA','KAI'][i]||('FISH '+(i+1)),
+ nx,ny,vx:(Math.random()>.5?1:-1)*.08,vy:(Math.random()-.5)*.04,
+ hunger:3+Math.random()*2,energy:8,trust:2+i*.4,goal:'explore',phase:Math.random()*6.28,color:colors[i%colors.length]
+}}
+function fit(){
+ const r=stage.getBoundingClientRect();DPR=Math.min(devicePixelRatio||1,2);W=Math.max(1,r.width);H=Math.max(1,r.height);
+ canvas.width=Math.round(W*DPR);canvas.height=Math.round(H*DPR);ctx.setTransform(DPR,0,0,DPR,0,0)
+}
+addEventListener('resize',fit);addEventListener('orientationchange',()=>setTimeout(fit,150));fit();
+
+function bg(){
+ const g=ctx.createLinearGradient(0,0,0,H);if(night){g.addColorStop(0,'#041218');g.addColorStop(1,'#031016')}
+ else{g.addColorStop(0,'#176879');g.addColorStop(.6,'#0f5361');g.addColorStop(1,'#092f39')}
+ ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+ ctx.globalAlpha=night?.18:.34;ctx.fillStyle='#b8fbff';
+ for(let i=0;i<14;i++){let x=(i*71+t*18)%W,y=(i*97)%H;ctx.beginPath();ctx.arc(x,y,1.5+(i%3),0,7);ctx.fill()}ctx.globalAlpha=1;
+ ctx.fillStyle='#c8a978';ctx.fillRect(0,H-72,W,72);
+ for(let i=0;i<65;i++){ctx.fillStyle=i%2?'#92785e':'#e0c18a';ctx.beginPath();ctx.ellipse((i*47)%W,H-66+(i*23)%60,3+(i%5),2+(i%3),0,0,7);ctx.fill()}
+ grass(W*.10,H-70,Math.min(95,H*.18));grass(W*.79,H-70,Math.min(110,H*.2));reef(W*.52,H-66)
+}
+function grass(x,b,h){for(let i=0;i<10;i++){let xx=x+i*5,hh=h*(.58+((i*17)%35)/100);ctx.strokeStyle=i%3===0?'#52a67c':'#3c8c6b';ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(xx,b);ctx.quadraticCurveTo(xx+Math.sin(t+i)*11,b-hh*.5,xx+Math.sin(t*.7+i)*7,b-hh);ctx.stroke()}}
+function reef(x,y){ctx.fillStyle='#8c6258';ctx.beginPath();ctx.arc(x,y-8,38,Math.PI,0);ctx.fill();ctx.strokeStyle='#d47882';ctx.lineWidth=8;[[0,-44],[15,-35],[-15,-32]].forEach(([dx,dy])=>{ctx.beginPath();ctx.moveTo(x+dx,y-8);ctx.lineTo(x+dx*1.35,y+dy);ctx.stroke()})}
+function fishDraw(f){
+ const x=f.nx*W,y=f.ny*H,s=Math.max(.72,Math.min(1.05,W/390));
+ ctx.save();ctx.translate(x,y);if(f.vx<0)ctx.scale(-1,1);ctx.translate(0,Math.sin(t*3+f.phase)*2);
+ ctx.fillStyle=f.color;ctx.strokeStyle='#13272b';ctx.lineWidth=3*s;
+ ctx.beginPath();ctx.ellipse(0,0,28*s,15*s,0,0,7);ctx.fill();ctx.stroke();
+ ctx.beginPath();ctx.moveTo(-24*s,0);ctx.lineTo(-43*s,-17*s);ctx.lineTo(-40*s,18*s);ctx.closePath();ctx.fill();ctx.stroke();
+ ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(14*s,-4*s,4*s,0,7);ctx.fill();ctx.fillStyle='#102126';ctx.beginPath();ctx.arc(15*s,-4*s,2*s,0,7);ctx.fill();ctx.restore()
+}
+function drawFood(){food.forEach(p=>{ctx.fillStyle='#d8ff76';ctx.beginPath();ctx.arc(p.x*W,p.y*H,4,0,7);ctx.fill()})}
+function goal(f){if(f.hunger>7&&food.length)return'seek_food';if(f.energy<2.5)return'rest';return Math.random()<.2?'visit_bubbles':Math.random()<.25?'follow_friend':'explore'}
+function update(dt){
+ t+=dt;
+ fish.forEach(f=>{
+  f.hunger=Math.min(10,f.hunger+dt*.035);f.energy=Math.max(.5,Math.min(10,f.energy+(night?.025:-.006)*dt));
+  if(Math.random()<dt*.05)f.goal=goal(f);
+  if(f.goal==='seek_food'&&food.length){
+   const p=food[0],dx=p.x-f.nx,dy=p.y-f.ny,d=Math.hypot(dx,dy)||1;f.vx=dx/d*.18;f.vy=dy/d*.18;
+   if(d<.07){food.shift();f.hunger=Math.max(0,f.hunger-3.4);f.trust=Math.min(10,f.trust+.25);coins+=2}
+  }else if(f.goal==='rest'){f.vx*=.97;f.vy*=.97}
+  else{f.vx+=Math.sin(t*.8+f.phase)*dt*.02;f.vy+=Math.cos(t*.65+f.phase)*dt*.018;let s=Math.hypot(f.vx,f.vy)||1,max=.13;if(s>max){f.vx=f.vx/s*max;f.vy=f.vy/s*max}}
+  f.nx+=f.vx*dt;f.ny+=f.vy*dt;
+  if(f.nx<.12){f.nx=.12;f.vx=Math.abs(f.vx)}if(f.nx>.88){f.nx=.88;f.vx=-Math.abs(f.vx)}
+  if(f.ny<.16){f.ny=.16;f.vy=Math.abs(f.vy)}if(f.ny>.80){f.ny=.80;f.vy=-Math.abs(f.vy)}
+ });
+ food.forEach(p=>p.y=Math.min(.86,p.y+dt*.07))
+}
+function frame(now){
+ const dt=Math.min(.04,(now-last)/1000);last=now;update(dt);bg();drawFood();fish.forEach(fishDraw);
+ document.getElementById('coins').textContent=coins+' SAND $';
+ const mins=Math.floor(t*2)%1440,day=1+Math.floor(t*2/1440),hr=Math.floor(mins/60),mm=mins%60;
+ document.getElementById('clock').textContent='DAY '+String(day).padStart(2,'0')+' · '+String(hr).padStart(2,'0')+':'+String(mm).padStart(2,'0');
+ requestAnimationFrame(frame)
+}requestAnimationFrame(frame);
+
+function pointer(e){const r=canvas.getBoundingClientRect();return{x:(e.clientX-r.left)/r.width,y:(e.clientY-r.top)/r.height}}
+canvas.addEventListener('pointerup',e=>{
+ const p=pointer(e);let hit=null,best=9;fish.forEach(f=>{let d=Math.hypot(f.nx-p.x,f.ny-p.y);if(d<.11&&d<best){hit=f;best=d}});
+ if(hit)showFish(hit);else{card.classList.remove('show');food.push({x:p.x,y:p.y});fish.forEach(f=>{if(f.hunger>4)f.goal='seek_food'})}
+});
+function showFish(f){card.classList.add('show');fishName.textContent=f.name;hunger.textContent=f.hunger.toFixed(1)+' / 10';energy.textContent=f.energy.toFixed(1)+' / 10';trust.textContent=f.trust.toFixed(1)+' / 10';goal.textContent=f.goal.replace('_',' ')}
+function feed(){for(let i=0;i<5;i++)food.push({x:.20+Math.random()*.60,y:.14+Math.random()*.04});fish.forEach(f=>f.goal='seek_food')}
+document.getElementById('feed').onclick=feed;
+document.getElementById('light').onclick=()=>night=!night;
+document.getElementById('reset').onclick=()=>{food=[];coins=0;t=0;night=false;fish.splice(0,fish.length,makeFish(.30,.38,0),makeFish(.72,.62,1));card.classList.remove('show')};
+document.getElementById('more').onclick=()=>sheet.classList.add('show');
+document.getElementById('closeSheet').onclick=()=>sheet.classList.remove('show');
+document.getElementById('checkUpdate').onclick=async()=>{
+ const el=document.getElementById('buildStatus');el.textContent='checking…';
+ try{const r=await fetch('https://api.github.com/repos/mediacutlet/pocket-tank/commits/main',{headers:{Accept:'application/vnd.github+json'}});const j=await r.json();el.textContent=j.sha.slice(0,7)+' · '+new Date(j.commit.committer.date).toLocaleDateString()}
+ catch(e){el.textContent='offline'}
+};
+</script>
+</body>
+</html>
