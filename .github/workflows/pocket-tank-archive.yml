@@ -1,0 +1,95 @@
+name: Pocket Tank Archive
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/pocket-tank-archive.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  archive:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Archive upstream source and website
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          ROOT="projects/pocket-tank-html/archive"
+          SRC="$ROOT/upstream-source"
+          SITE="$ROOT/original-site"
+
+          rm -rf "$SRC" "$SITE"
+          mkdir -p "$SRC" "$SITE"
+
+          git clone --depth 1 https://github.com/mediacutlet/pocket-tank.git /tmp/pocket-tank
+          UPSTREAM_SHA="$(git -C /tmp/pocket-tank rev-parse HEAD)"
+          rsync -a --exclude='.git' /tmp/pocket-tank/ "$SRC/"
+
+          set +e
+          wget             --mirror             --convert-links             --adjust-extension             --page-requisites             --no-parent             --execute robots=off             --user-agent="Mozilla/5.0"             --directory-prefix=/tmp/pocketank-site             https://pocketank.com/
+          WGET_STATUS=$?
+          set -e
+
+          if [ -d /tmp/pocketank-site/pocketank.com ]; then
+            rsync -a /tmp/pocketank-site/pocketank.com/ "$SITE/"
+          else
+            set +e
+            curl -fL --retry 3 -A "Mozilla/5.0" https://pocketank.com/ -o "$SITE/index.html"
+            CURL_STATUS=$?
+            set -e
+            if [ "$CURL_STATUS" -ne 0 ]; then
+              cat > "$SITE/_DOWNLOAD_FAILED.txt" <<'EOF'
+          Automated website capture failed from the GitHub runner.
+          Source URL: https://pocketank.com/
+          The upstream GitHub source was still archived successfully.
+          EOF
+            fi
+          fi
+
+          CAPTURED_UTC="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          cat > "$ROOT/README.md" <<EOF
+          # Pocket Tank archive
+
+          This folder preserves the original public Pocket Tank materials separately from the custom desktop and phone builds.
+
+          - Upstream source: https://github.com/mediacutlet/pocket-tank
+          - Upstream commit archived: `$UPSTREAM_SHA`
+          - Website captured from: https://pocketank.com/
+          - Reference short: https://youtube.com/shorts/Sel01T5sZq8?is=sYQjrKE91vi7yy0c
+          - Full episode reference: https://youtu.be/u7Zq3NmTlhl
+          - Captured UTC: `$CAPTURED_UTC`
+
+          ## Layout
+
+          - `upstream-source/` — full checked-out upstream source, excluding only its nested `.git` directory.
+          - `original-site/` — mirrored website files when the site allows automated capture.
+
+          The existing custom files `../index.html` and `../phone.html` stay independent and are not overwritten.
+
+          ## License
+
+          The upstream Pocket Tank source identifies its license as MIT. Preserve the upstream `LICENSE` file and original notices.
+          EOF
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "$ROOT"
+
+          if git diff --cached --quiet; then
+            echo "Archive already matches current upstream/site capture."
+            exit 0
+          fi
+
+          git commit -m "Archive Pocket Tank website and upstream source"
+          git push
