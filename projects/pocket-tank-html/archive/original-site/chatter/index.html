@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#062536">
+<link rel="icon" href="../assets/img/favicon-64.png" sizes="64x64" type="image/png">
+<link rel="apple-touch-icon" href="../assets/img/apple-touch-icon.png">
+<meta property="og:site_name" content="Pocket Tank">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://pocketank.com/assets/img/og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="675">
+<meta property="og:image:alt" content="Strato holding Pocket Tank, a tiny fish tank on a pocket-sized screen">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://pocketank.com/assets/img/og.jpg">
+<!-- fonts from this site, not Google (2026-10-04, the privacy policy) -->
+<link rel="preload" href="../assets/fonts/inter-tight-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="../assets/fonts/fredoka-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../assets/fonts.css%3Fv=057bc6c4.css">
+<!-- Google Analytics, only with consent (/privacy/): nothing loads from Google
+     until the visitor taps Allow (or allowed before); Global Privacy Control
+     counts as No. Ads storage is never granted. -->
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('consent', 'default', { analytics_storage: 'denied', ad_storage: 'denied', ad_user_data: 'denied', ad_personalization: 'denied' });
+  window.ptAnalytics = function () {
+    if (window.ptAnalyticsOn) return;
+    window.ptAnalyticsOn = true;
+    gtag('consent', 'update', { analytics_storage: 'granted' });
+    var s = document.createElement('script');
+    s.async = true; s.src = 'https://www.googletagmanager.com/gtag/js?id=G-VBMSH4Y5TB';
+    document.head.appendChild(s);
+    gtag('js', new Date());
+    gtag('config', 'G-VBMSH4Y5TB');
+  };
+  try { if (localStorage.getItem('pt-consent') === 'granted' && !navigator.globalPrivacyControl) window.ptAnalytics(); } catch (e) {}
+</script>
+<link rel="stylesheet" href="../assets/site.css%3Fv=c635a66a.css">
+<script src="../assets/site.js%3Fv=8475b764" defer></script>
+
+<title>Pocket Tank in the press: chatter and mentions</title>
+<meta name="description" content="What people are saying about Pocket Tank, the AI virtual pet fish tank: articles from Hackaday, Hackster.io and more, plus tanks keepers have built on other boards.">
+<link rel="canonical" href="index.html">
+<meta property="og:url" content="https://pocketank.com/chatter/">
+<meta property="og:title" content="Pocket Tank in the press">
+<meta property="og:description" content="Articles about Pocket Tank, and tanks keepers have built on other boards.">
+<meta name="twitter:title" content="Pocket Tank in the press">
+<meta name="twitter:description" content="Articles about Pocket Tank, and tanks keepers have built on other boards.">
+<style>
+  .entry h3 a { color: var(--ink); text-decoration: none; }
+  .entry h3 a:hover { text-decoration: underline; }
+  .entry .by { margin: 8px 0 0; font-size: 15px; color: var(--muted); }
+  .chatter-group { margin-bottom: 48px; }
+  .chatter-group > h2 { font-size: clamp(26px, 3.4vw, 32px); margin-bottom: 18px; }
+</style>
+</head>
+<body>
+<a class="sr-only" href="index.html#main">Skip to content</a>
+<header class="top" data-top>
+  <div class="wrap">
+    <a class="brand" href="../index.html" aria-label="Pocket Tank home"><picture><source srcset="/assets/img/logo.webp" type="image/webp"><img src="../assets/img/logo.png" alt="Pocket Tank" width="150" height="45"></picture></a>
+    <nav class="nav" aria-label="Main">
+      <a class="hide-md" href="../index.html#what">What it is</a>
+      <a class="hide-md" href="../hardware/index.html">Hardware</a>
+      <a class="hide-md" href="../index.html#get">Get one</a>
+      <a class="hide-md" href="../index.html#new">Updates</a>
+      <a class="hide-md" href="../index.html#list">Follow along</a>
+      <a class="btn small" href="../install/index.html">Install</a>
+      <button class="burger" type="button" aria-expanded="false" aria-controls="site-menu" data-menu-toggle>
+        <span class="sr-only" data-menu-label>Open menu</span><span class="bars" aria-hidden="true"><i></i><i></i><i></i></span>
+      </button>
+    </nav>
+  </div>
+  <!-- the phone / small-tablet menu: every page, plus its own newsletter signup -->
+  <div class="menu" id="site-menu" hidden data-menu>
+    <div class="wrap">
+      <nav class="menu-links" aria-label="Menu">
+        <a href="../index.html#what">What it is</a>
+        <a href="../hardware/index.html">Hardware</a>
+        <a href="../index.html#get">Get one</a>
+        <a href="../index.html#new">Updates</a>
+        <a href="../help/index.html">Help</a>
+        <a href="index.html" aria-current="page">Chatter</a>
+        <a class="btn" href="../install/index.html">Install Pocket Tank</a>
+      </nav>
+      <div class="menu-list">
+        <span class="eyebrow">Newsletter</span>
+        <h2>Follow along</h2>
+        <p>New fish, new things for the shop, new episodes. A short email when there's something worth telling.</p>
+        <form class="form" action="https://pocketank.com/subscribe.php" method="post" data-signup>
+          <div class="field">
+            <label class="sr-only" for="menu-email">Email address</label>
+            <input type="email" id="menu-email" name="email" required maxlength="254" autocomplete="email" placeholder="you@example.com">
+            <button class="btn" type="submit">Keep me posted</button>
+          </div>
+          <label class="check"><input type="checkbox" name="buy" value="1"> <span>I'd like to <b>buy a ready-made Pocket Tank</b> if they go on sale.</span></label>
+          <div class="hp" aria-hidden="true"><label>Leave this empty <input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
+          <input type="hidden" name="t" value="">
+          <input type="hidden" name="from" value="menu">
+          <p class="status" role="status" aria-live="polite"></p>
+          <p class="fine">Just your email. No spam, never shared or sold. Unsubscribe any time.</p>
+        </form>
+      </div>
+      <p class="menu-foot"><a href="https://www.youtube.com/@StratoBuilds">YouTube</a><a href="https://github.com/mediacutlet/pocket-tank">GitHub</a></p>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+  <div class="page-head">
+    <div class="wrap">
+      <span class="eyebrow">Chatter</span>
+      <h1>People are talking</h1>
+      <p>Articles about Pocket Tank, and tanks keepers have built on boards of their own.</p>
+    </div>
+  </div>
+  <div class="page">
+    <div class="wrap">
+      <section class="chatter-group" id="press">
+        <h2>In the press</h2>
+        <div class="log compact"><article class="entry"><div><time datetime="2026-09-28">September 28, 2026</time><span class="ver">Electronics For You</span></div><div><h3><a href="https://www.electronicsforu.com/news/esp32-pocket-aquarium-runs-its-own-tiny-ai-brain">ESP32 Pocket Aquarium Runs Its Own Tiny AI Brain</a></h3><p>How a language model small enough for an ESP32 lets each fish choose for itself when to eat, rest or explore.</p><p class="by">by Ananthu Ashok</p></div></article><article class="entry"><div><time datetime="2026-09-26">September 26, 2026</time><span class="ver">Hackaday</span></div><div><h3><a href="https://hackaday.com/2026/09/26/a-pocket-sized-digital-fish-tank/">A Pocket-Sized Digital Fish Tank</a></h3><p>The pocket-sized tank, and the tiny model on the board that decides what every fish does next.</p><p class="by">by Zoe Skyforest</p></div></article><article class="entry"><div><time datetime="2026-09-26">September 26, 2026</time><span class="ver">TechEBlog</span></div><div><h3><a href="https://www.techeblog.com/stratobuilds-ai-fish-tank-project-build-aquarium/">StratoBuilds&#x27; AI Fish Tank Packs a 14 Million-Parameter Fish Brain in Your Pocket</a></h3><p>A walk through the build, from the fish brain to the 1.8-inch screen it lives on.</p></div></article><article class="entry"><div><time datetime="2026-09-26">September 26, 2026</time><span class="ver">Geeky Gadgets</span></div><div><h3><a href="https://www.geeky-gadgets.com/build-pocket-ai-fish-tank/">Build a Pocket-Sized Aquarium Complete With AI Fish Using an ESP32</a></h3><p>How to make one yourself: the board, the AI fish, and how they behave.</p><p class="by">by Julian Horsey</p></div></article><article class="entry"><div><time datetime="2026-09-12">September 12, 2026</time><span class="ver">Hackster.io</span></div><div><h3><a href="https://www.hackster.io/news/this-virtual-aquarium-is-driven-by-a-tiny-llm-3ce0ccd30813">This Virtual Aquarium Is Driven by a Tiny LLM</a></h3><p>Fitting a language model onto a microcontroller is hard. Giving it a real job once it&#x27;s there is harder. This one keeps a tank of fish alive.</p><p class="by">by Nick Bild</p></div></article></div>
+      </section>
+      <section class="chatter-group" id="community">
+        <h2>Built by keepers</h2>
+        <div class="log compact"><article class="entry"><div><time datetime="2026-09-26">September 26, 2026</time><span class="ver">GitHub</span></div><div><h3><a href="https://github.com/lmoiseichuk/pocket-tank-cyd">Pocket Tank on the ES3C28P</a></h3><p>A port to the ES3C28P, a 2.8-inch ESP32-S3 touch display.</p><p class="by">by lmoiseichuk</p></div></article><article class="entry"><div><time datetime="2026-09-16">September 16, 2026</time><span class="ver">GitHub</span></div><div><h3><a href="https://github.com/knoopx/pocket-tank-p4">Pocket Tank on the ESP32-P4</a></h3><p>A port to a Waveshare ESP32-P4 touch board.</p><p class="by">by knoopx</p></div></article></div>
+      </section>
+      <div class="card">
+        <h3>Wrote about Pocket Tank?</h3>
+        <p>Send it over and it goes on this page. Email <a href="mailto:strato@pocketank.com">strato@pocketank.com</a>, or post it in the <a href="https://github.com/mediacutlet/pocket-tank/discussions">GitHub discussions</a>.</p>
+      </div>
+    </div>
+  </div>
+  <section id="list">
+    <div class="wrap">
+      <div class="signup">
+        <div>
+          <span class="eyebrow">Newsletter</span>
+          <h2>Follow along</h2>
+          <p>New fish, new decorations, new episodes, and news about ready-made tanks. A short email when there's something worth telling.</p>
+        </div>
+        <form class="form" action="https://pocketank.com/subscribe.php" method="post" data-signup>
+  <div class="field">
+    <label class="sr-only" for="signup-email">Email address</label>
+    <input type="email" id="signup-email" name="email" required maxlength="254" autocomplete="email" placeholder="you@example.com">
+    <button class="btn" type="submit">Keep me posted</button>
+  </div>
+  <label class="check"><input type="checkbox" name="buy" value="1" data-buy-box> <span>I'd like to <b>buy a ready-made Pocket Tank</b> if they go on sale.</span></label>
+  <div class="hp" aria-hidden="true"><label>Leave this empty <input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
+  <input type="hidden" name="t" value="">
+  <input type="hidden" name="from" value="chatter">
+  <p class="status" role="status" aria-live="polite"></p>
+  <p class="fine">Just your email. No spam, never shared or sold. Unsubscribe any time.</p>
+</form>
+
+      </div>
+    </div>
+  </section>
+</main>
+<footer class="foot">
+  <div class="wrap">
+    <a href="../index.html" aria-label="Pocket Tank home"><img src="../assets/img/wordmark.webp" alt="Pocket Tank" width="130" height="33"></a>
+    <nav aria-label="Footer">
+      <a href="../install/index.html">Install</a>
+      <a href="../hardware/index.html">Hardware</a>
+      <a href="../updates/index.html">Updates</a>
+      <a href="../help/index.html">Help</a>
+      <a href="index.html">Chatter</a>
+      <a href="../index.html#list">Newsletter</a>
+      <a href="https://www.youtube.com/@StratoBuilds">YouTube</a>
+      <a href="https://github.com/mediacutlet/pocket-tank">GitHub</a>
+    </nav>
+    <div>&copy; 2026 <a href="https://stratobuilds.com">StratoBuilds</a></div>
+  </div>
+  <div class="wrap foot-fine">
+    <a href="../privacy/index.html">Privacy</a>
+    <button type="button" class="linkish" data-consent-open>Analytics settings</button>
+  </div>
+</footer>
+<!-- the consent card: shown once, until the visitor chooses (site.js) -->
+<div class="consent" hidden data-consent role="region" aria-label="Analytics choice">
+  <p><b>Can we count your visit?</b> We use Google Analytics to see how visitors interact with this site. No ads, nothing sold. <a href="../privacy/index.html#analytics">Privacy</a></p>
+  <div class="consent-actions">
+    <button type="button" class="btn small" data-consent-choice="granted">Allow</button>
+    <button type="button" class="btn small ghost" data-consent-choice="denied">No thanks</button>
+  </div>
+</div>
+
+</body>
+</html>

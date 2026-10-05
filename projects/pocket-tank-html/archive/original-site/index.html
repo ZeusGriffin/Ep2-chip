@@ -1,0 +1,377 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#062536">
+<link rel="icon" href="assets/img/favicon-64.png" sizes="64x64" type="image/png">
+<link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+<meta property="og:site_name" content="Pocket Tank">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://pocketank.com/assets/img/og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="675">
+<meta property="og:image:alt" content="Strato holding Pocket Tank, a tiny fish tank on a pocket-sized screen">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://pocketank.com/assets/img/og.jpg">
+<!-- fonts from this site, not Google (2026-10-04, the privacy policy) -->
+<link rel="preload" href="assets/fonts/inter-tight-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/fonts/fredoka-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="assets/fonts.css%3Fv=057bc6c4.css">
+<!-- Google Analytics, only with consent (/privacy/): nothing loads from Google
+     until the visitor taps Allow (or allowed before); Global Privacy Control
+     counts as No. Ads storage is never granted. -->
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('consent', 'default', { analytics_storage: 'denied', ad_storage: 'denied', ad_user_data: 'denied', ad_personalization: 'denied' });
+  window.ptAnalytics = function () {
+    if (window.ptAnalyticsOn) return;
+    window.ptAnalyticsOn = true;
+    gtag('consent', 'update', { analytics_storage: 'granted' });
+    var s = document.createElement('script');
+    s.async = true; s.src = 'https://www.googletagmanager.com/gtag/js?id=G-VBMSH4Y5TB';
+    document.head.appendChild(s);
+    gtag('js', new Date());
+    gtag('config', 'G-VBMSH4Y5TB');
+  };
+  try { if (localStorage.getItem('pt-consent') === 'granted' && !navigator.globalPrivacyControl) window.ptAnalytics(); } catch (e) {}
+</script>
+<link rel="stylesheet" href="assets/site.css%3Fv=c635a66a.css">
+<script src="assets/site.js%3Fv=8475b764" defer></script>
+
+<title>Pocket Tank: an AI virtual pet fish tank you can hold in one hand</title>
+<meta name="description" content="Pocket Tank is a virtual pet fish tank on a pocket-sized screen. A tiny AI on the board decides what every fish does next. Free, open source, no internet needed.">
+<link rel="canonical" href="index.html">
+<meta property="og:url" content="https://pocketank.com/">
+<meta property="og:title" content="Pocket Tank: a virtual pet fish tank where the fish think for themselves">
+<meta property="og:description" content="A pocket-sized virtual pet aquarium with a real AI inside. No internet, no app, no cloud.">
+<meta name="twitter:title" content="Pocket Tank: a virtual pet fish tank where the fish think for themselves">
+<meta name="twitter:description" content="A pocket-sized virtual pet aquarium with a real AI inside. No internet, no app, no cloud.">
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebSite","@id":"https://pocketank.com/#website","url":"https://pocketank.com/","name":"Pocket Tank","alternateName":["Pocketank","pocketank.com"],"inLanguage":"en-US","publisher":{"@id":"https://pocketank.com/#org"}},{"@type":"Organization","@id":"https://pocketank.com/#org","name":"StratoBuilds","url":"https://stratobuilds.com/","logo":"https://pocketank.com/assets/img/logo.png","sameAs":["https://www.youtube.com/@StratoBuilds","https://github.com/mediacutlet"]},{"@type":"SoftwareApplication","@id":"https://pocketank.com/#app","name":"Pocket Tank","alternateName":"Pocketank","description":"A virtual pet fish tank on a pocket-sized screen. A tiny language model running on the board decides what every fish does next. Free, open source, no internet needed.","applicationCategory":"GameApplication","applicationSubCategory":"Virtual pet","operatingSystem":"ESP32-S3 firmware for Waveshare AMOLED touch boards","url":"https://pocketank.com/","downloadUrl":"https://pocketank.com/install/","softwareVersion":"0.3.1","image":"https://pocketank.com/assets/img/og.jpg","screenshot":"https://pocketank.com/assets/shots/hero.png","isAccessibleForFree":true,"license":"https://opensource.org/licenses/MIT","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"author":{"@id":"https://pocketank.com/#org"},"sameAs":["https://github.com/mediacutlet/pocket-tank"],"keywords":"virtual pet, AI fish tank, digital aquarium, virtual aquarium, Tamagotchi-style pet, ESP32, on-device language model, open source"},{"@type":"VideoObject","name":"My AI Fish Tank Is Becoming a Tiny Virtual World","description":"Babies, a shop, a castle and a snail: Pocket Tank keeps growing.","uploadDate":"2026-09-23T12:00:00-07:00","thumbnailUrl":["https://i.ytimg.com/vi/u7Zq3NmTIhI/maxresdefault.jpg","https://pocketank.com/assets/img/ep-u7Zq3NmTIhI.webp"],"contentUrl":"https://www.youtube.com/watch?v=u7Zq3NmTIhI","embedUrl":"https://www.youtube.com/embed/u7Zq3NmTIhI","publisher":{"@id":"https://pocketank.com/#org"}},{"@type":"VideoObject","name":"I Built an AI Fish Tank That Fits in My Pocket","description":"Where Pocket Tank started: teaching a tiny AI to run a fish tank on a pocket-sized screen.","uploadDate":"2026-09-10T12:00:00-07:00","thumbnailUrl":["https://i.ytimg.com/vi/C2z7x47xxdM/maxresdefault.jpg","https://pocketank.com/assets/img/ep-C2z7x47xxdM.webp"],"contentUrl":"https://www.youtube.com/watch?v=C2z7x47xxdM","embedUrl":"https://www.youtube.com/embed/C2z7x47xxdM","publisher":{"@id":"https://pocketank.com/#org"}}]}</script>
+</head>
+<body>
+<a class="sr-only" href="index.html#main">Skip to content</a>
+<header class="top" data-top>
+  <div class="wrap">
+    <a class="brand" href="index.html" aria-label="Pocket Tank home"><picture><source srcset="/assets/img/logo.webp" type="image/webp"><img src="assets/img/logo.png" alt="Pocket Tank" width="150" height="45"></picture></a>
+    <nav class="nav" aria-label="Main">
+      <a class="hide-md" href="index.html#what">What it is</a>
+      <a class="hide-md" href="hardware/index.html">Hardware</a>
+      <a class="hide-md" href="index.html#get">Get one</a>
+      <a class="hide-md" href="index.html#new">Updates</a>
+      <a class="hide-md" href="index.html#list">Follow along</a>
+      <a class="btn small" href="install/index.html">Install</a>
+      <button class="burger" type="button" aria-expanded="false" aria-controls="site-menu" data-menu-toggle>
+        <span class="sr-only" data-menu-label>Open menu</span><span class="bars" aria-hidden="true"><i></i><i></i><i></i></span>
+      </button>
+    </nav>
+  </div>
+  <!-- the phone / small-tablet menu: every page, plus its own newsletter signup -->
+  <div class="menu" id="site-menu" hidden data-menu>
+    <div class="wrap">
+      <nav class="menu-links" aria-label="Menu">
+        <a href="index.html#what">What it is</a>
+        <a href="hardware/index.html">Hardware</a>
+        <a href="index.html#get">Get one</a>
+        <a href="index.html#new">Updates</a>
+        <a href="help/index.html">Help</a>
+        <a href="chatter/index.html">Chatter</a>
+        <a class="btn" href="install/index.html">Install Pocket Tank</a>
+      </nav>
+      <div class="menu-list">
+        <span class="eyebrow">Newsletter</span>
+        <h2>Follow along</h2>
+        <p>New fish, new things for the shop, new episodes. A short email when there's something worth telling.</p>
+        <form class="form" action="https://pocketank.com/subscribe.php" method="post" data-signup>
+          <div class="field">
+            <label class="sr-only" for="menu-email">Email address</label>
+            <input type="email" id="menu-email" name="email" required maxlength="254" autocomplete="email" placeholder="you@example.com">
+            <button class="btn" type="submit">Keep me posted</button>
+          </div>
+          <label class="check"><input type="checkbox" name="buy" value="1"> <span>I'd like to <b>buy a ready-made Pocket Tank</b> if they go on sale.</span></label>
+          <div class="hp" aria-hidden="true"><label>Leave this empty <input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
+          <input type="hidden" name="t" value="">
+          <input type="hidden" name="from" value="menu">
+          <p class="status" role="status" aria-live="polite"></p>
+          <p class="fine">Just your email. No spam, never shared or sold. Unsubscribe any time.</p>
+        </form>
+      </div>
+      <p class="menu-foot"><a href="https://www.youtube.com/@StratoBuilds">YouTube</a><a href="https://github.com/mediacutlet/pocket-tank">GitHub</a></p>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+
+  <div class="hero">
+    <canvas data-swim aria-hidden="true"></canvas>
+    <div class="wrap">
+      <div>
+        <picture><source srcset="/assets/img/logo.webp" type="image/webp"><img class="logo" src="assets/img/logo.png" alt="Pocket Tank" width="1400" height="421" fetchpriority="high"></picture>
+        <h1 class="tagline"><span class="sr-only">Pocket Tank: </span>A tiny fish tank where the fish think for themselves.</h1>
+        <p class="lede">A real AI lives inside a board you can hold in one hand. It decides when each fish eats, explores, plays or rests. No internet. No app. No cloud.</p>
+        <div class="actions">
+          <a class="btn" href="index.html#get">Get your own</a>
+          <a class="btn ghost" href="index.html#watch"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M8 5.5v13l11-6.5z"/></svg>Watch the videos</a>
+        </div>
+        <ul class="facts">
+          <li>Pocket-sized</li>
+          <li>Runs on a battery</li>
+          <li>Works offline</li>
+        </ul>
+      </div>
+      <div class="device tilt"><video src="assets/shots/hero-loop.mp4" poster="assets/shots/hero-loop-poster.webp" width="896" height="736" autoplay muted loop playsinline disablepictureinpicture disableremoteplayback preload="auto" data-hero-loop aria-label="The tank running: three fish swim over a coral reef and through a stone castle's arch, then race up to eat when food drops in"></video></div>
+    </div>
+  </div>
+
+  <section id="what">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow">What it is</span>
+        <h2>A pet you keep on your desk</h2>
+        <p>Pocket Tank is a little aquarium on a little screen. You take care of it, and the fish live their own lives.</p>
+      </div>
+      <div class="cards">
+        <div class="card">
+          <img class="icon" src="assets/img/fish-violet.webp" alt="" width="56" height="44">
+          <h3>Fish with their own minds</h3>
+          <p>Every fish has a personality. Some are bold, some are shy. Every few seconds each one looks around and decides what to do next. When it can't make up its mind, you'll see it hesitate.</p>
+        </div>
+        <div class="card">
+          <img class="icon" src="assets/img/fish-teal.webp" alt="" width="56" height="44">
+          <h3>A tank you look after</h3>
+          <p>Tap the water to feed them. Wipe algae off the glass. Trim the grass. Hold a finger on the glass and the fish that trust you swim over to say hi.</p>
+        </div>
+        <div class="card">
+          <img class="icon" src="assets/img/sand-dollar.webp" alt="" width="56" height="56">
+          <h3>It keeps living</h3>
+          <p>Put it to sleep and it keeps track of time. Come back tomorrow and the fish are hungry, the grass has grown, and maybe there's a new baby waiting.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="watch">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow">Watch</span>
+        <h2>See it swim</h2>
+        <p>How it was built, and how it keeps growing. New episodes land on the <a href="https://www.youtube.com/@StratoBuilds">StratoBuilds YouTube channel</a>.</p>
+      </div>
+      <div class="videos">
+        <figure class="video">
+          <button type="button" data-yt="u7Zq3NmTIhI" aria-label="Play: My AI Fish Tank Is Becoming a Tiny Virtual World">
+            <img src="assets/img/ep-u7Zq3NmTIhI.webp" alt="" width="960" height="540" loading="lazy"><span class="play"></span>
+          </button>
+          <figcaption><b>My AI Fish Tank Is Becoming a Tiny Virtual World</b>Babies, a shop, a castle and a snail. September 23, 2026.</figcaption>
+        </figure>
+        <figure class="video">
+          <button type="button" data-yt="C2z7x47xxdM" aria-label="Play: I Built an AI Fish Tank That Fits in My Pocket">
+            <img src="assets/img/ep-C2z7x47xxdM.webp" alt="" width="960" height="540" loading="lazy"><span class="play"></span>
+          </button>
+          <figcaption><b>I Built an AI Fish Tank That Fits in My Pocket</b>Where it started: teaching a tiny AI to run a fish tank. September 10, 2026.</figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <section id="life">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow">Life in the tank</span>
+        <h2>It grows with you</h2>
+        <p>Nothing here is scripted. Everything happens because of how you care for the tank, and it's all saved.</p>
+      </div>
+      <div class="rows">
+        <div class="row">
+          <div class="row-pic pics">
+            <img class="shot" src="assets/shots/birth-born.png" alt="A new fry announcement on the tank's screen" width="448" height="368" loading="lazy">
+            <img class="shot" src="assets/shots/birth-family.png" alt="A newborn's family page: body color from one parent, markings from the other" width="448" height="368" loading="lazy">
+          </div>
+          <div>
+            <h3>Raise a family</h3>
+            <p>You start with two baby fish, and you name them. Feed them and they grow up. Take good care of them, and a pair will dance in the grass and have a baby of their own.</p>
+            <p>Every newborn gets its colors from its parents, and a name from you. The tank grows up to six fish.</p>
+          </div>
+        </div>
+        <div class="row">
+          <div class="row-pic"><img class="shot" src="assets/shots/hero-card.png" alt="A fish's stats card showing its needs and personality" width="448" height="368" loading="lazy"></div>
+          <div>
+            <h3>Get to know them</h3>
+            <p>Tap a fish to see its card: how hungry it is, how tired, how it's feeling, and how much it trusts you.</p>
+            <p>A new fish's card starts mostly blank. You learn who it is by watching it.</p>
+          </div>
+        </div>
+        <div class="row">
+          <div class="row-pic"><img class="shot" src="assets/shots/milestones.png" alt="The milestones page: a row of badges for each fish" width="448" height="368" loading="lazy"></div>
+          <div>
+            <h3>Earn badges</h3>
+            <p>Each fish earns badges for its firsts: first meal from your hand, first trip to the reef, first time it swims over when you call. The tank earns its own for your chores.</p>
+            <p>A checklist shows what the tank needs before the next baby can arrive, with tips for each step.</p>
+          </div>
+        </div>
+        <div class="row">
+          <div class="row-pic pics">
+            <img class="shot" src="assets/shots/cluster.png" alt="A reef cluster in full bloom on the tank floor" width="448" height="368" loading="lazy">
+            <img class="shot" src="assets/shots/castle.png" alt="A stone castle with a fish swimming through its arch" width="448" height="368" loading="lazy">
+          </div>
+          <div>
+            <h3>Decorate with sand dollars</h3>
+            <p>Taking care of the tank earns sand dollars. Spend them in the shop:</p>
+            <ul>
+              <li>A <b>sword plant</b> for more cover</li>
+              <li>A <b>snail</b> that cleans the glass, even at night</li>
+              <li>A <b>castle</b> the fish swim through</li>
+              <li>A <b>coral</b> you color yourself, which grows for weeks</li>
+              <li>A whole <b>reef</b> that blooms with tentacles</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="how">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow">How it works</span>
+        <h2>A tiny brain, all on the board</h2>
+        <p>The fish are run by a small language model: the same kind of AI as a chatbot, shrunk way down. A big AI watched tens of thousands of fish situations and said what each fish should do. Then a tiny one learned to copy it, small enough to fit on the chip.</p>
+      </div>
+      <div class="stats">
+        <div class="stat"><b>14M</b><span>parameters in the fish brain</span></div>
+        <div class="stat"><b>7.5 MB</b><span>the whole brain, stored on the board</span></div>
+        <div class="stat"><b>~4 s</b><span>for a fish to make a decision</span></div>
+        <div class="stat"><b>0</b><span>internet connections needed</span></div>
+      </div>
+      <pre class="trace" aria-label="An example of what a fish tells the brain, and its answer">zone 2 hunger 7 energy 5 stress 2 curiosity 8 bold 4 social 6 stage adult
+trust 6 bored 3 food near 12 friend mid 3 bubble mid 10 reef far 7
+wall clear last explore time day  <em>-&gt;  seek_food urgency 8</em></pre>
+      <p class="trace-note">What one fish tells the brain, and what the brain decides: go find food, and hurry. The code, the model and how it was trained are all <a href="https://github.com/mediacutlet/pocket-tank">open source on GitHub</a>.</p>
+    </div>
+  </section>
+
+  <section id="get">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow">Get one</span>
+        <h2>Get your own Pocket Tank</h2>
+      </div>
+      <div class="get">
+        <div class="card">
+          <h3>Set one up yourself</h3>
+          <p>No soldering, no coding. It takes about two minutes once you have a board.</p>
+          <ol class="steps">
+            <li><b>Pick a board.</b> The <a href="hardware/index.html#amoled-1-8">original</a> is a Waveshare 1.8&Prime; screen for about $30. There is also a round <a href="hardware/index.html#round-1-75c">pendant</a> and a <a href="hardware/index.html#watch-2-06">watch</a>. <a href="hardware/index.html">Compare them all</a>.</li>
+            <li><b>Plug it into your computer</b> with a USB-C cable.</li>
+            <li><b>Open the installer</b> in Chrome or Edge and click Install. Two baby fish are waiting when it's done.</li>
+          </ol>
+          <div class="actions">
+            <a class="btn" href="install/index.html">Open the installer</a>
+            <a class="btn ghost" href="hardware/index.html">Compare the boards</a>
+          </div>
+        </div>
+        <div class="card glow">
+          <img class="coin" src="assets/img/sand-dollar.webp" alt="" width="72" height="70">
+          <h3>Want one ready to go?</h3>
+          <p>Lots of you have asked to buy a Pocket Tank that's already set up. I'm working out what that could look like.</p>
+          <p>Join the list and tick the box. You'll be the first to hear.</p>
+          <div class="actions"><a class="btn" href="index.html#list" data-want-buy>Put me on the list</a></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="promise">
+    <div class="wrap">
+      <div class="promise">
+  <div class="badge" aria-hidden="true"><img src="assets/img/fish-teal.webp" alt="" width="84" height="66"></div>
+  <div>
+    <h2>Update any time. Your fish stay.</h2>
+    <p class="big">Updates install from the same page with the same button. An update replaces the app and the fish brain. It never touches the part of the board where your tank is saved.</p>
+    <ul class="checks">
+      <li>Your fish and their names</li>
+      <li>Their trust, growth and families</li>
+      <li>Every badge you've earned</li>
+      <li>Your sand dollars</li>
+      <li>Everything you've bought and placed</li>
+      <li>How clean the glass is (sorry)</li>
+    </ul>
+    <p style="margin-top:20px">Every new version can read tanks saved by every older one, and each update is checked against real saved tanks before it goes out. Going back to an older version keeps your tank too. The only ways to lose a tank are on purpose: the reset (hold <kbd>BOOT</kbd> and tap the glass, then answer YES) or the erase button on the install page.</p>
+  </div>
+</div>
+
+    </div>
+  </section>
+
+  <section id="new">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow">What's new</span>
+        <h2>Latest updates</h2>
+        <p>Pocket Tank keeps getting new things. Every update is free, and installs from the same page.</p>
+      </div>
+      <div class="log compact"><article class="entry" id="v-0.3.1"><div><time datetime="2026-10-04">October 4, 2026</time><span class="ver">Version <code>0.3.1</code> alpha<span class="build">build bf0c6b8</span></span><span class="latest">Latest</span></div><div><h3>Version 0.3: two new tanks, updates over Wi-Fi, and a sea urchin</h3><p>Pocket Tank now runs on a round pendant and a watch, updates itself over Wi-Fi, and has a sea urchin in the shop.</p></div></article><article class="entry" id="v-0.2.0"><div><time datetime="2026-09-30">September 30, 2026</time><span class="ver">Version <code>0.2.0</code> alpha<span class="build">build b6eb24f</span></span></div><div><h3>Version 0.2: shrimp, and fish that turn like fish</h3><p>Our first numbered release. A school of shrimp for the shop, a much more natural turn for every fish, and a few fixes.</p></div></article><article class="entry" id="v-963b619"><div><time datetime="2026-09-29">September 29, 2026</time><span class="ver">Version <code>963b619</code></span></div><div><h3>Clearer sand dollars for trimming</h3><p>The shop now says exactly how trimming the grass pays.</p></div></article></div>
+      <p class="more-link"><a class="btn ghost" href="updates/index.html">See detailed changelog</a></p>
+    </div>
+  </section>
+
+  <section id="list">
+    <div class="wrap">
+      <div class="signup">
+        <div>
+          <span class="eyebrow">Newsletter</span>
+          <h2>Follow along</h2>
+          <p>New fish, new decorations, new episodes, and news about ready-made tanks. A short email when there's something worth telling.</p>
+        </div>
+        <form class="form" action="https://pocketank.com/subscribe.php" method="post" data-signup>
+  <div class="field">
+    <label class="sr-only" for="signup-email">Email address</label>
+    <input type="email" id="signup-email" name="email" required maxlength="254" autocomplete="email" placeholder="you@example.com">
+    <button class="btn" type="submit">Keep me posted</button>
+  </div>
+  <label class="check"><input type="checkbox" name="buy" value="1" data-buy-box> <span>I'd like to <b>buy a ready-made Pocket Tank</b> if they go on sale.</span></label>
+  <div class="hp" aria-hidden="true"><label>Leave this empty <input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
+  <input type="hidden" name="t" value="">
+  <input type="hidden" name="from" value="home">
+  <p class="status" role="status" aria-live="polite"></p>
+  <p class="fine">Just your email. No spam, never shared or sold. Unsubscribe any time.</p>
+</form>
+
+      </div>
+    </div>
+  </section>
+
+</main>
+<footer class="foot">
+  <div class="wrap">
+    <a href="index.html" aria-label="Pocket Tank home"><img src="assets/img/wordmark.webp" alt="Pocket Tank" width="130" height="33"></a>
+    <nav aria-label="Footer">
+      <a href="install/index.html">Install</a>
+      <a href="hardware/index.html">Hardware</a>
+      <a href="updates/index.html">Updates</a>
+      <a href="help/index.html">Help</a>
+      <a href="chatter/index.html">Chatter</a>
+      <a href="index.html#list">Newsletter</a>
+      <a href="https://www.youtube.com/@StratoBuilds">YouTube</a>
+      <a href="https://github.com/mediacutlet/pocket-tank">GitHub</a>
+    </nav>
+    <div>&copy; 2026 <a href="https://stratobuilds.com">StratoBuilds</a></div>
+  </div>
+  <div class="wrap foot-fine">
+    <a href="privacy/index.html">Privacy</a>
+    <button type="button" class="linkish" data-consent-open>Analytics settings</button>
+  </div>
+</footer>
+<!-- the consent card: shown once, until the visitor chooses (site.js) -->
+<div class="consent" hidden data-consent role="region" aria-label="Analytics choice">
+  <p><b>Can we count your visit?</b> We use Google Analytics to see how visitors interact with this site. No ads, nothing sold. <a href="privacy/index.html#analytics">Privacy</a></p>
+  <div class="consent-actions">
+    <button type="button" class="btn small" data-consent-choice="granted">Allow</button>
+    <button type="button" class="btn small ghost" data-consent-choice="denied">No thanks</button>
+  </div>
+</div>
+
+</body>
+</html>

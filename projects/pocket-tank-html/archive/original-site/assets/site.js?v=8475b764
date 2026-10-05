@@ -1,0 +1,195 @@
+/* pocketank.com: the header's rule on scroll, the hero's bubbles, videos that
+   load YouTube only when clicked, and the newsletter form. No libraries. */
+(function () {
+  'use strict';
+
+  /* ---------- header: a hairline once the page has scrolled ---------- */
+  var top = document.querySelector('[data-top]');
+  if (top) {
+    var onScroll = function () { top.classList.toggle('scrolled', window.scrollY > 8); };
+    addEventListener('scroll', onScroll, { passive: true }); onScroll();
+  }
+
+  /* ---------- analytics consent: a small card, asked once (the tag itself is in the head) ---------- */
+  var card = document.querySelector('[data-consent]');
+  if (card) {
+    var stored = null;
+    try { stored = localStorage.getItem('pt-consent'); } catch (e) {}
+    var gpc = !!navigator.globalPrivacyControl;          /* the browser already said no */
+    var showCard = function () { card.hidden = false; var b = card.querySelector('[data-consent-choice="granted"]'); if (b) b.focus({ preventScroll: true }); };
+    if (!stored && !gpc) setTimeout(function () { card.hidden = false; }, 900);
+    card.querySelectorAll('[data-consent-choice]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var v = b.getAttribute('data-consent-choice');
+        try { localStorage.setItem('pt-consent', v); } catch (e) {}
+        card.hidden = true;
+        if (v === 'granted' && !gpc && window.ptAnalytics) window.ptAnalytics();
+        if (v === 'denied') {
+          if (window.gtag) window.gtag('consent', 'update', { analytics_storage: 'denied' });
+          /* take back what Google Analytics stored, on this host and the parent domain */
+          document.cookie.split(';').forEach(function (c) {
+            var name = c.split('=')[0].trim();
+            if (/^_ga/.test(name)) ['', '; domain=.pocketank.com', '; domain=pocketank.com'].forEach(function (d) {
+              document.cookie = name + '=; Max-Age=0; path=/' + d;
+            });
+          });
+        }
+      });
+    });
+    document.querySelectorAll('[data-consent-open]').forEach(function (b) { b.addEventListener('click', showCard); });
+  }
+
+  /* ---------- the menu (phones and small tablets) ---------- */
+  var toggle = document.querySelector('[data-menu-toggle]');
+  var menu = document.querySelector('[data-menu]');
+  if (toggle && menu) {
+    var label = toggle.querySelector('[data-menu-label]');
+    var wide = matchMedia('(min-width: 961px)');
+    var setMenu = function (open, refocus) {
+      if (open === !menu.hidden) return;
+      menu.hidden = !open;
+      toggle.setAttribute('aria-expanded', String(open));
+      if (label) label.textContent = open ? 'Close menu' : 'Open menu';
+      document.documentElement.classList.toggle('menu-open', open);
+      if (top) top.classList.toggle('menu-up', open);
+      if (open) { var first = menu.querySelector('a'); if (first) first.focus({ preventScroll: true }); }
+      else if (refocus) toggle.focus({ preventScroll: true });
+    };
+    toggle.addEventListener('click', function () { setMenu(menu.hidden, true); });
+    /* a link closes it (and an anchor on this page still scrolls, now the page can) */
+    menu.querySelectorAll('a').forEach(function (a) { a.addEventListener('click', function () { setMenu(false, false); }); });
+    addEventListener('keydown', function (e) {
+      if (menu.hidden) return;
+      if (e.key === 'Escape') { setMenu(false, true); return; }
+      if (e.key !== 'Tab') return;                 /* keep the keyboard inside the open menu */
+      var f = [toggle].concat([].slice.call(menu.querySelectorAll('a, button, input:not([type="hidden"]):not([tabindex="-1"])')));
+      var i = f.indexOf(document.activeElement);
+      if (e.shiftKey && i <= 0) { e.preventDefault(); f[f.length - 1].focus(); }
+      else if (!e.shiftKey && i === f.length - 1) { e.preventDefault(); f[0].focus(); }
+    });
+    (wide.addEventListener ? wide.addEventListener.bind(wide, 'change') : wide.addListener.bind(wide))(function () {
+      if (wide.matches) setMenu(false, false);
+    });
+  }
+
+  /* ---------- videos: a local picture until clicked (no YouTube cookies before that) ---------- */
+  document.querySelectorAll('[data-yt]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var f = document.createElement('iframe');
+      f.src = 'https://www.youtube-nocookie.com/embed/' + btn.getAttribute('data-yt') + '?autoplay=1&rel=0';
+      f.title = btn.getAttribute('aria-label').replace(/^Play: /, '');
+      f.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
+      f.allowFullscreen = true;
+      f.referrerPolicy = 'strict-origin-when-cross-origin';
+      btn.replaceWith(f);
+    });
+  });
+
+  /* ---------- hardware: a board's thumbnails swap its big picture ---------- */
+  document.querySelectorAll('[data-gallery]').forEach(function (g) {
+    var main = g.querySelector('.board-main');
+    g.querySelectorAll('button[data-src]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        main.src = b.getAttribute('data-src'); main.alt = b.getAttribute('data-alt');
+        g.querySelectorAll('button[data-src]').forEach(function (o) { o.setAttribute('aria-pressed', String(o === b)); });
+      });
+    });
+  });
+
+  /* ---------- "put me on the list": tick the buy box on the way down ---------- */
+  document.querySelectorAll('[data-want-buy]').forEach(function (a) {
+    a.addEventListener('click', function () {
+      var box = document.querySelector('[data-buy-box]');
+      if (box) box.checked = true;
+      var email = document.getElementById('signup-email');
+      if (email) setTimeout(function () { email.focus({ preventScroll: true }); }, 450);
+    });
+  });
+
+  /* ---------- newsletter ---------- */
+  var MESSAGES = {
+    ok: "You're on the list. Thanks for following along!",
+    already: "You're already on the list. Thanks!",
+    invalid: "That email doesn't look right. Mind checking it?",
+    slow: "Too many tries from here. Please wait a bit and try again.",
+    error: "Something went wrong on our end. Please try again in a minute."
+  };
+  document.querySelectorAll('[data-signup]').forEach(function (form) {
+    var started = Date.now();
+    var t = form.querySelector('[name="t"]');
+    if (t) t.value = String(Math.floor(started / 1000));
+    var status = form.querySelector('.status');
+    var btn = form.querySelector('button[type="submit"]');
+    function say(kind, msg) { status.className = 'status ' + (kind === 'ok' || kind === 'already' ? 'ok' : 'err'); status.textContent = msg; }
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var email = form.querySelector('[name="email"]');
+      if (!email.value || !email.checkValidity()) { say('invalid', MESSAGES.invalid); email.focus(); return; }
+      btn.disabled = true; status.className = 'status'; status.textContent = 'Sending…';
+      fetch(form.action, { method: 'POST', body: new FormData(form), headers: { 'Accept': 'application/json' } })
+        .then(function (r) { return r.json().catch(function () { return { result: 'error' }; }); })
+        .then(function (res) {
+          var kind = MESSAGES[res.result] ? res.result : 'error';
+          say(kind, MESSAGES[kind]);
+          if (kind === 'ok' || kind === 'already') { email.value = ''; }
+        })
+        .catch(function () { say('error', MESSAGES.error); })
+        .then(function () { btn.disabled = false; });
+    });
+  });
+  /* the no-JavaScript path comes back as /?signup=<result>#list */
+  var m = /[?&]signup=(\w+)/.exec(location.search);
+  if (m) {
+    var s = document.querySelector('#list [data-signup] .status') || document.querySelector('main [data-signup] .status');
+    if (s && MESSAGES[m[1]]) { s.className = 'status ' + (m[1] === 'ok' || m[1] === 'already' ? 'ok' : 'err'); s.textContent = MESSAGES[m[1]]; }
+  }
+
+  /* ---------- the hero's tank clip: held on its first frame for reduced motion ---------- */
+  var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var loop = document.querySelector('video[data-hero-loop]');
+  if (loop) {
+    loop.muted = true;
+    if (reduce) { loop.removeAttribute('autoplay'); loop.pause(); }
+    else { var lp = loop.play(); if (lp && lp.catch) lp.catch(function () {}); }
+  }
+
+  /* ---------- the hero's bubbles (2026-10-04: the drifting logo fish retired,
+     the real tank's clip carries the hero now) ---------- */
+  var c = document.querySelector('canvas[data-swim]');
+  if (!c || reduce) return;
+  var ctx = c.getContext('2d'), W = 0, H = 0, dpr = 1, running = true;
+  var bubbles = [], last = 0;
+  function rnd(a, b) { return a + Math.random() * (b - a); }
+  function resize() {
+    dpr = Math.min(devicePixelRatio || 1, 2);
+    var r = c.getBoundingClientRect();
+    W = c.width = Math.round(r.width * dpr); H = c.height = Math.round(r.height * dpr);
+  }
+  function step(now) {
+    if (!running) return;
+    var t = now / 1000, dt = Math.min(.05, (now - last) / 1000 || 0); last = now;
+    ctx.clearRect(0, 0, W, H);
+    if (Math.random() < dt * 1.2) bubbles.push({ x: rnd(.02, .98), y: 1.05, r: rnd(1.5, 4), v: rnd(.05, .1) });
+    ctx.strokeStyle = 'rgba(160,230,255,.35)'; ctx.lineWidth = dpr;
+    for (var b = bubbles.length - 1; b >= 0; b--) {
+      var o = bubbles[b]; o.y -= o.v * dt;
+      if (o.y < -.05) { bubbles.splice(b, 1); continue; }
+      ctx.beginPath(); ctx.arc(o.x * W + Math.sin(t * 2 + o.x * 10) * 4 * dpr, o.y * H, o.r * dpr, 0, 6.2832); ctx.stroke();
+    }
+    requestAnimationFrame(step);
+  }
+  /* stop drawing while the hero is off screen */
+  if ('IntersectionObserver' in window) new IntersectionObserver(function (es) {
+    var vis = es[0].isIntersecting;
+    if (vis && !running) { running = true; last = 0; requestAnimationFrame(step); } else if (!vis) running = false;
+  }).observe(c);
+  addEventListener('resize', resize); resize(); requestAnimationFrame(step);
+})();
+
+/* the update log's looping clips (2026-09-29, v0.2.0): muted autoplay, with a
+   nudge for browsers that hold it back until asked */
+document.querySelectorAll('.entry video[autoplay]').forEach(v => {
+  v.muted = true;
+  const p = v.play();
+  if (p && p.catch) p.catch(() => {});
+});
